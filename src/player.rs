@@ -1,11 +1,14 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use serde_json::{json, Value};
+
+use crate::item::Item;
 
 pub struct Player {
     name: String,
     class: String,
-    xp: HashMap<String, i32>,
+    xp: HashMap<String, i64>,
+    inventory: Vec<Item>,
     health: i32,
     location: String,
 }
@@ -16,10 +19,12 @@ impl Player {
             name,
             class,
             xp: HashMap::new(),
+            inventory: Vec::new(),
             health: 100,
             location: "Littlewood Town".to_string(),
         };
 
+        player.xp.insert("hitpoints".to_string(), 0);
         player.xp.insert("melee".to_string(), 0);
         player.xp.insert("ranged".to_string(), 0);
         player.xp.insert("magic".to_string(), 0);
@@ -40,46 +45,51 @@ impl Player {
             name,
             class,
             xp: HashMap::new(),
+            inventory: Vec::new(),
             health: 100,
             location: "Littlewood Town".to_string(),
         };
 
         player.xp.insert(
-            "melee".to_string(),
-            json["xp"]["melee"].as_i64().unwrap() as i32,
+            "hitpoints".to_string(),
+            json["xp"]["hitpoints"].as_i64().unwrap(),
         );
-        player.xp.insert(
-            "ranged".to_string(),
-            json["xp"]["ranged"].as_i64().unwrap() as i32,
-        );
-        player.xp.insert(
-            "magic".to_string(),
-            json["xp"]["magic"].as_i64().unwrap() as i32,
-        );
-        player.xp.insert(
-            "mining".to_string(),
-            json["xp"]["mining"].as_i64().unwrap() as i32,
-        );
+        player
+            .xp
+            .insert("melee".to_string(), json["xp"]["melee"].as_i64().unwrap());
+        player
+            .xp
+            .insert("ranged".to_string(), json["xp"]["ranged"].as_i64().unwrap());
+        player
+            .xp
+            .insert("magic".to_string(), json["xp"]["magic"].as_i64().unwrap());
+        player
+            .xp
+            .insert("mining".to_string(), json["xp"]["mining"].as_i64().unwrap());
         player.xp.insert(
             "smithing".to_string(),
-            json["xp"]["smithing"].as_i64().unwrap() as i32,
+            json["xp"]["smithing"].as_i64().unwrap(),
         );
         player.xp.insert(
             "woodcutting".to_string(),
-            json["xp"]["woodcutting"].as_i64().unwrap() as i32,
+            json["xp"]["woodcutting"].as_i64().unwrap(),
         );
         player.xp.insert(
             "fishing".to_string(),
-            json["xp"]["fishing"].as_i64().unwrap() as i32,
+            json["xp"]["fishing"].as_i64().unwrap(),
         );
         player.xp.insert(
             "cooking".to_string(),
-            json["xp"]["cooking"].as_i64().unwrap() as i32,
+            json["xp"]["cooking"].as_i64().unwrap(),
         );
         player.xp.insert(
             "farming".to_string(),
-            json["xp"]["farming"].as_i64().unwrap() as i32,
+            json["xp"]["farming"].as_i64().unwrap(),
         );
+
+        for item in json["inventory"].as_array().unwrap() {
+            player.inventory.push(Item::deserialize(item));
+        }
 
         return player;
     }
@@ -89,6 +99,7 @@ impl Player {
             "name": self.name,
             "class": self.class,
             "xp": {
+                "hitpoints": self.xp["hitpoints"],
                 "melee": self.xp["melee"],
                 "ranged": self.xp["ranged"],
                 "magic": self.xp["magic"],
@@ -99,6 +110,7 @@ impl Player {
                 "cooking": self.xp["cooking"],
                 "farming": self.xp["farming"],
             },
+            "inventory": self.inventory.iter().map(|item| item.serialize()).collect::<Vec<String>>(),
         })
         .to_string()
     }
@@ -116,7 +128,7 @@ impl Player {
     }
 
     pub fn get_xp(&self, skill: &String) -> i64 {
-        self.xp[skill] as i64
+        self.xp[skill]
     }
 
     pub fn get_level(&self, skill: &String) -> i32 {
