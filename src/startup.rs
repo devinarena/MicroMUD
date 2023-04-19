@@ -1,23 +1,24 @@
+use std::thread;
 
 use text_io::read;
 
 use crate::{
-    game::{game_loop, action},
+    game::{action, game_loop, player},
     io_manager::{clear_screen, get_all_saves, read_player_save, write_player_save},
-    player::{Player, Action},
+    player::{Action, Player},
 };
 
-fn setup_ctrl_c_handler(player: &Player) {
+fn setup_ctrl_c_handler() {
     ctrlc::set_handler(move || {
         let mut act = action.lock().unwrap();
         if *act == Action::IDLE {
-            println!("Saved game and exited.");
-            std::process::exit(0);
+            *act = Action::EXITING;
         } else {
             *act = Action::IDLE;
         }
     })
     .expect("Error setting Ctrl-C handler");
+    println!("Press Ctrl-C to stop.");
 }
 
 pub fn create_character_menu() {
@@ -34,9 +35,8 @@ pub fn create_character_menu() {
     println!("Classes:");
     println!("Enter your class:");
 
-    let mut player = Player::new(name, "Warrior".to_string());
-    write_player_save(&player);
-    game_loop(&player);
+    *player.lock().unwrap() = Player::new(name, "Warrior".to_string());
+    write_player_save();
 }
 
 pub fn load_character_menu(saves: &Vec<String>) {
@@ -57,42 +57,52 @@ pub fn load_character_menu(saves: &Vec<String>) {
     }
     let save = saves[input - 1].clone();
 
-    let mut player = read_player_save(&save);
-
-    setup_ctrl_c_handler(&player);
-
-    game_loop(&player);
+    *player.lock().unwrap() = read_player_save(&save);
 }
 
 pub fn main_menu() {
     clear_screen();
-    println!("Welcome to MicroMUD!");
 
-    let saves = get_all_saves();
-    if saves.len() == 0 {
-        println!("No saves were found.");
-    }
+    setup_ctrl_c_handler();
 
-    println!();
+    let mut input = 0;
 
-    println!("What would you like to do?");
+    while input != 3 {
+        println!("Welcome to MicroMUD!");
 
-    println!("1. New Game");
-    println!("2. Load Game");
-    println!("3. Exit");
-
-    print!("> ");
-    let input: i32 = read!();
-
-    match input {
-        1 => {
-            create_character_menu();
+        let saves = get_all_saves();
+        if saves.len() == 0 {
+            println!("No saves were found.");
         }
-        2 => {
-            load_character_menu(&saves);
-        }
-        _ => {
-            println!("Invalid input.");
+
+        println!();
+
+        println!("What would you like to do?");
+
+        println!("1. New Game");
+        println!("2. Load Game");
+        println!("3. Exit");
+
+        print!("> ");
+        input = read!();
+
+        match input {
+            1 => {
+                create_character_menu();
+
+                game_loop();
+            }
+            2 => {
+                load_character_menu(&saves);
+
+                game_loop();
+            }
+            3 => {
+                
+            }
+            _ => {
+                println!("Invalid input.");
+            }
         }
     }
 }

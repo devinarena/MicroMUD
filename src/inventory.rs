@@ -1,4 +1,4 @@
-use serde_json::json;
+use serde_json::{json, Value};
 
 use crate::item::Item;
 
@@ -20,12 +20,12 @@ impl Inventory {
         }
     }
 
-    pub fn serialize(&self) -> String {
+    pub fn serialize(&self) -> Value {
         let mut output = Vec::new();
         for item in &self.items {
             output.push(item.serialize());
         }
-        json!({ "items": output }).to_string()
+        json!({ "items": output })
     }
 
     pub fn get_items(&self) -> &Vec<Item> {

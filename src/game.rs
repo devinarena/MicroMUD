@@ -6,12 +6,15 @@ use crate::{io_manager::clear_screen, player::{Player, Action}, skilling::skilli
 
 pub static TICK_RATE: u32 = 20;
 pub static action: Mutex<Action> = Mutex::new(Action::IDLE);
+pub static player: Mutex<Player>;
 
-pub fn game_loop(player: &Player) {
+pub fn game_loop() {
     clear_screen();
 
-    println!("Welcome to MicroMUD, {}!", player.get_name());
-    println!("Current location: {}", player.get_location());
+    let mut pl = player.lock().unwrap();
+
+    println!("Welcome to MicroMUD, {}!", pl.get_name());
+    println!("Current location: {}", pl.get_location());
     println!("What would you like to do?");
     println!("1. View Stats");
     println!("2. View Inventory");
@@ -32,7 +35,7 @@ pub fn game_loop(player: &Player) {
 
     match input {
         3 => {
-            skilling_menu(player);
+            skilling_menu();
         }
         _ => {}
     }

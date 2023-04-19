@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use serde_json::{json, Value};
 
@@ -6,8 +6,19 @@ use crate::{inventory::Inventory, item::Item};
 
 #[derive(Clone, PartialEq)]
 pub enum Action {
+    EXITING,
     IDLE,
     CHOPPING,
+}
+
+impl Display for Action {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Action::EXITING => write!(f, "exiting"),
+            Action::IDLE => write!(f, "idle"),
+            Action::CHOPPING => write!(f, "chopping"),
+        }
+    }
 }
 
 pub struct Player {
@@ -42,6 +53,17 @@ impl Player {
         player.xp.insert("farming".to_string(), 0);
 
         return player;
+    }
+
+    pub fn empty() -> Player {
+        Player {
+            name: "".to_string(),
+            class: "".to_string(),
+            xp: HashMap::new(),
+            inventory: Inventory::new(),
+            health: 0,
+            location: "".to_string(),
+        }
     }
 
     pub fn deserialize(json: &Value) -> Player {
@@ -93,7 +115,7 @@ impl Player {
             json["xp"]["farming"].as_i64().unwrap(),
         );
 
-        for item in json["inventory"].as_array().unwrap() {
+        for item in json["inventory"]["items"].as_array().unwrap() {
             player.inventory.add_item(Item::deserialize(item));
         }
 
@@ -119,6 +141,10 @@ impl Player {
             "inventory": self.inventory.serialize(),
         })
         .to_string()
+    }
+
+    pub fn get_inventory(&self) -> &Inventory {
+        &self.inventory
     }
 
     pub fn get_name(&self) -> String {

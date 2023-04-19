@@ -7,7 +7,7 @@ use std::{
 
 use serde_json;
 
-use crate::player::Player;
+use crate::{player::Player, game::player};
 
 pub fn get_all_saves() -> Vec<String> {
     let mut saves = Vec::new();
@@ -30,9 +30,10 @@ pub fn read_player_save(save: &String) -> Player {
     Player::deserialize(&player_json)
 }
 
-pub fn write_player_save(player: &Player) {
-    let player_json = player.serialize();
-    let save = format!("saves/{}.json", player.get_name());
+pub fn write_player_save() {
+    let pl = player.lock().unwrap();
+    let player_json = pl.serialize();
+    let save = format!("saves/{}.json", pl.get_name());
     let mut file =
         File::create(save.clone()).expect(format!("Unable to create {}.json", save).as_str());
     file.write_all(player_json.as_bytes())

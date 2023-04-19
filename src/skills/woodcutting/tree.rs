@@ -9,6 +9,12 @@ pub trait TreeData {
 
 pub struct NormalTree {}
 
+impl NormalTree {
+    pub fn new() -> NormalTree {
+        NormalTree {}
+    }
+}
+
 impl TreeData for NormalTree {
     fn get_name(&self) -> String {
         "Normal Tree".to_string()
