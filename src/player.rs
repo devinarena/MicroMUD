@@ -2,13 +2,19 @@ use std::collections::HashMap;
 
 use serde_json::{json, Value};
 
-use crate::item::Item;
+use crate::{inventory::Inventory, item::Item};
+
+#[derive(Clone, PartialEq)]
+pub enum Action {
+    IDLE,
+    CHOPPING,
+}
 
 pub struct Player {
     name: String,
     class: String,
     xp: HashMap<String, i64>,
-    inventory: Vec<Item>,
+    inventory: Inventory,
     health: i32,
     location: String,
 }
@@ -19,7 +25,7 @@ impl Player {
             name,
             class,
             xp: HashMap::new(),
-            inventory: Vec::new(),
+            inventory: Inventory::new(),
             health: 100,
             location: "Littlewood Town".to_string(),
         };
@@ -45,7 +51,7 @@ impl Player {
             name,
             class,
             xp: HashMap::new(),
-            inventory: Vec::new(),
+            inventory: Inventory::new(),
             health: 100,
             location: "Littlewood Town".to_string(),
         };
@@ -88,7 +94,7 @@ impl Player {
         );
 
         for item in json["inventory"].as_array().unwrap() {
-            player.inventory.push(Item::deserialize(item));
+            player.inventory.add_item(Item::deserialize(item));
         }
 
         return player;
@@ -110,7 +116,7 @@ impl Player {
                 "cooking": self.xp["cooking"],
                 "farming": self.xp["farming"],
             },
-            "inventory": self.inventory.iter().map(|item| item.serialize()).collect::<Vec<String>>(),
+            "inventory": self.inventory.serialize(),
         })
         .to_string()
     }

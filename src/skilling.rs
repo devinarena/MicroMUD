@@ -1,6 +1,6 @@
 use text_io::read;
 
-use crate::{io_manager::clear_screen, player::Player};
+use crate::{io_manager::clear_screen, player::Player, skills::woodcutting::woodcutting_menu};
 
 pub fn print_skills(player: &Player) {
     println!("Current skills:");
@@ -10,8 +10,9 @@ pub fn print_skills(player: &Player) {
 pub fn skilling_menu(player: &Player) {
     clear_screen();
     print_skills(player);
-    println!("Which skill would you like to train?");
+    println!("\nWhich skill would you like to train?");
     println!("1. Woodcutting");
+    println!("2. Main Menu");
 
     print!("> ");
 
@@ -21,15 +22,9 @@ pub fn skilling_menu(player: &Player) {
         print!("> ");
         input = read!();
     }
-}
 
-pub fn woodcutting_menu(player: &Player) {
-    clear_screen();
-    println!("Which tree would you like to cut?");
-    println!("1. Normal Tree");
-    println!("2. Oak Tree");
-    println!("3. Willow Tree");
-    println!("4. Maple Tree");
-    println!("5. Yew Tree");
-    println!("6. Magic Tree");
+    match input {
+        1 => woodcutting_menu(player),
+        _ => println!("Invalid input. Please enter a number between 1 and 1."),
+    }
 }

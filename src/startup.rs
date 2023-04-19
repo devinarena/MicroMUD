@@ -1,10 +1,24 @@
+
 use text_io::read;
 
 use crate::{
-    game::game_loop,
+    game::{game_loop, action},
     io_manager::{clear_screen, get_all_saves, read_player_save, write_player_save},
-    player::Player,
+    player::{Player, Action},
 };
+
+fn setup_ctrl_c_handler(player: &Player) {
+    ctrlc::set_handler(move || {
+        let mut act = action.lock().unwrap();
+        if *act == Action::IDLE {
+            println!("Saved game and exited.");
+            std::process::exit(0);
+        } else {
+            *act = Action::IDLE;
+        }
+    })
+    .expect("Error setting Ctrl-C handler");
+}
 
 pub fn create_character_menu() {
     println!("Enter your name:");
@@ -20,7 +34,7 @@ pub fn create_character_menu() {
     println!("Classes:");
     println!("Enter your class:");
 
-    let player = Player::new(name, "Warrior".to_string());
+    let mut player = Player::new(name, "Warrior".to_string());
     write_player_save(&player);
     game_loop(&player);
 }
@@ -42,7 +56,11 @@ pub fn load_character_menu(saves: &Vec<String>) {
         input = read!();
     }
     let save = saves[input - 1].clone();
-    let player = read_player_save(&save);
+
+    let mut player = read_player_save(&save);
+
+    setup_ctrl_c_handler(&player);
+
     game_loop(&player);
 }
 
