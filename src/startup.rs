@@ -3,7 +3,7 @@ use std::thread;
 use text_io::read;
 
 use crate::{
-    game::{action, game_loop, player},
+    game::{action, game_loop, PLAYER},
     io_manager::{clear_screen, get_all_saves, read_player_save, write_player_save},
     player::{Action, Player},
 };
@@ -12,7 +12,10 @@ fn setup_ctrl_c_handler() {
     ctrlc::set_handler(move || {
         let mut act = action.lock().unwrap();
         if *act == Action::IDLE {
-            *act = Action::EXITING;
+            write_player_save();
+            println!("Saving and exiting...");
+            thread::sleep(std::time::Duration::from_millis(1000));
+            std::process::exit(0);
         } else {
             *act = Action::IDLE;
         }
@@ -35,7 +38,7 @@ pub fn create_character_menu() {
     println!("Classes:");
     println!("Enter your class:");
 
-    *player.lock().unwrap() = Player::new(name, "Warrior".to_string());
+    *PLAYER.lock().unwrap() = Player::new(name, "Warrior".to_string());
     write_player_save();
 }
 
@@ -57,7 +60,7 @@ pub fn load_character_menu(saves: &Vec<String>) {
     }
     let save = saves[input - 1].clone();
 
-    *player.lock().unwrap() = read_player_save(&save);
+    *PLAYER.lock().unwrap() = read_player_save(&save);
 }
 
 pub fn main_menu() {

@@ -1,6 +1,7 @@
 use serde_json::{json, Value};
+use text_io::read;
 
-use crate::item::Item;
+use crate::{item::Item, game::{PLAYER, game_loop}, startup::main_menu};
 
 pub struct Inventory {
     pub items: Vec<Item>,
@@ -18,6 +19,7 @@ impl Inventory {
                 return;
             }
         }
+        self.items.push(item);
     }
 
     pub fn serialize(&self) -> Value {
@@ -31,4 +33,16 @@ impl Inventory {
     pub fn get_items(&self) -> &Vec<Item> {
         &self.items
     }
+}
+
+pub fn view_inventory() {
+    println!("Inventory:");
+    for item in PLAYER.lock().unwrap().get_inventory().get_items() {
+        println!("{} x{}", item.get_material(), item.get_quantity());
+    }
+
+    println!("Type anything or press enter to continue: ");
+    let input: String = read!();
+
+    game_loop();
 }

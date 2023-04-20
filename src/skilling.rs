@@ -1,18 +1,31 @@
 use text_io::read;
 
-use crate::{io_manager::clear_screen, player::Player, skills::woodcutting::woodcutting_menu, game::player};
+use crate::{
+    game::PLAYER, io_manager::clear_screen, player::Player, skills::woodcutting::woodcutting_menu,
+};
 
-pub fn print_skills(pl: &Player) {
+pub fn print_skills() {
+    let pl = &PLAYER.lock().unwrap();
+    let mut skills: Vec<String> = Vec::new();
+    for (key, _) in pl.get_skills() {
+        skills.push(key.clone());
+    }
     println!("Current skills:");
-    println!("Woodcutting: {}", pl.get_level(&"woodcutting".to_string()));
+    for skill in skills {
+        println!(
+            "{}: {} ({} / {})",
+            skill,
+            pl.get_level(&skill),
+            pl.get_xp(&skill),
+            pl.needed_xp(&skill)
+        );
+    }
 }
 
 pub fn skilling_menu() {
     clear_screen();
 
-    let mut pl= &player.lock().unwrap();
-
-    print_skills(pl);
+    print_skills();
     println!("\nWhich skill would you like to train?");
     println!("1. Woodcutting");
     println!("2. Main Menu");
@@ -20,7 +33,7 @@ pub fn skilling_menu() {
     print!("> ");
 
     let mut input: usize = read!();
-    while input < 1 || input > 1 {
+    while input < 1 || input > 2 {
         println!("Invalid input. Please enter a number between 1 and 1.");
         print!("> ");
         input = read!();
@@ -28,6 +41,7 @@ pub fn skilling_menu() {
 
     match input {
         1 => woodcutting_menu(),
+        2 => {}
         _ => println!("Invalid input. Please enter a number between 1 and 1."),
     }
 }

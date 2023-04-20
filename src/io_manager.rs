@@ -1,13 +1,11 @@
 use std::{
-    env::join_paths,
     fs::File,
     io::{Read, Write},
-    path::Path,
 };
 
 use serde_json;
 
-use crate::{player::Player, game::player};
+use crate::{game::PLAYER, player::Player};
 
 pub fn get_all_saves() -> Vec<String> {
     let mut saves = Vec::new();
@@ -31,7 +29,7 @@ pub fn read_player_save(save: &String) -> Player {
 }
 
 pub fn write_player_save() {
-    let pl = player.lock().unwrap();
+    let pl = PLAYER.lock().unwrap();
     let player_json = pl.serialize();
     let save = format!("saves/{}.json", pl.get_name());
     let mut file =

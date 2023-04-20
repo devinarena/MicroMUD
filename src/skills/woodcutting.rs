@@ -6,7 +6,7 @@ use rand::random;
 use text_io::read;
 
 use crate::{
-    game::{self, action, player},
+    game::{self, action, PLAYER},
     io_manager::clear_screen,
     player::{Action, Player},
     skills::woodcutting::tree::NormalTree,
@@ -19,21 +19,19 @@ pub fn woodcut(tree: &dyn TreeData) {
     println!("You walk over to the nearest tree.");
     println!("You begin to chop down the tree.");
 
-    let mut pl = player.lock().unwrap();
+    let mut pl = PLAYER.lock().unwrap();
     let mut act = action.lock().unwrap();
     *act = Action::CHOPPING;
 
     drop(act);
 
-    println!("{}", *action.lock().unwrap());
-
     while *action.lock().unwrap() == Action::CHOPPING {
         let roll = random::<u32>() % 100;
 
-        println!("{}", roll);
-
         if roll < tree.get_success_rate() {
-            println!("You chop the tree and get some logs.");
+            println!("You chop the tree and get some logs. (+{} woodcutting xp)", tree.get_xp());
+            pl.add_xp(&"woodcutting".to_string(), tree.get_xp());
+            pl.get_inventory().add_item(tree.get_result());
         }
 
         thread::sleep(Duration::new(

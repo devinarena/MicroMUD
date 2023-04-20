@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, fmt::Display};
 
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -6,6 +6,14 @@ use serde_json::json;
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 pub enum Material {
     LOG,
+}
+
+impl Display for Material {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Material::LOG => write!(f, "Log"),
+        }
+    }
 }
 
 impl FromStr for Material {

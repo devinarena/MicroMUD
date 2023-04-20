@@ -143,8 +143,12 @@ impl Player {
         .to_string()
     }
 
-    pub fn get_inventory(&self) -> &Inventory {
-        &self.inventory
+    pub fn get_inventory(&mut self) -> &mut Inventory {
+        &mut self.inventory
+    }
+
+    pub fn get_skills(&self) -> &HashMap<String, i64> {
+        &self.xp
     }
 
     pub fn get_name(&self) -> String {
@@ -164,14 +168,48 @@ impl Player {
     }
 
     pub fn get_level(&self, skill: &String) -> i32 {
-        let xp = self.xp[skill];
-        let level = (1.0 + 6.0 * ((xp as f64) * 4.7 / 150.0).log2()).floor();
-        return level as i32;
+        let mut xp = self.xp[skill] as f64;
+        let mut level: i32 = 1;
+        while xp > 0.0 {
+            let needed_xp = 100.0 * 1.75_f64.powf((level - 1) as f64 / 8.0) / 4.7;
+            if xp >= needed_xp as f64 {
+                level += 1;
+                xp -= needed_xp;
+            } else {
+                return level;
+            }
+        }
+
+        return level;
     }
 
     pub fn needed_xp(&self, skill: &String) -> i64 {
-        let next_level = self.get_level(skill) + 1;
-        let needed_xp = ((150.0 * 2_f32.powf((next_level - 1) as f32) / 6.0) / 4.7) as i64;
+        let level = self.get_level(skill);
+        let mut xp = 0;
+        for i in 1..level {
+            xp += self._needed_xp_l(i);
+        }
+        return xp;
+    }
+
+    fn _needed_xp_l(&self, level: i32) -> i64 {
+        let needed_xp = (100.0 * 1.75_f64.powf((level - 1) as f64 / 8.0) / 4.7) as i64;
         return needed_xp;
+    }
+
+    pub fn add_xp(&mut self, skill: &String, xp: i64) {
+        let needed_xp = self.needed_xp(skill);
+
+        let old_xp = self.xp[skill];
+
+        self.xp.insert(skill.clone(), self.xp[skill] + xp);
+
+        if old_xp < needed_xp && self.xp[skill] >= needed_xp {
+            println!(
+                "Congratulations! You have just advanced a level in {}! You are now level {}.",
+                skill,
+                self.get_level(skill)
+            );
+        }
     }
 }
