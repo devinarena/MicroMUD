@@ -169,31 +169,32 @@ impl Player {
 
     pub fn get_level(&self, skill: &String) -> i32 {
         let mut xp = self.xp[skill] as f64;
+
         let mut level: i32 = 1;
-        while xp > 0.0 {
-            let needed_xp = 100.0 * 1.75_f64.powf((level - 1) as f64 / 8.0) / 4.7;
-            if xp >= needed_xp as f64 {
-                level += 1;
-                xp -= needed_xp;
-            } else {
-                return level;
-            }
+
+        while xp >= 0.0 {
+            let needed_xp = self._needed_xp_l(level);
+            xp -= needed_xp as f64;
+            level += 1;
         }
 
-        return level;
+        return level - 1;
     }
 
     pub fn needed_xp(&self, skill: &String) -> i64 {
         let level = self.get_level(skill);
-        let mut xp = 0;
-        for i in 1..level {
-            xp += self._needed_xp_l(i);
+        let mut next_xp = 0;
+        
+        for i in 1..level+1 {
+            let needed_xp = self._needed_xp_l(i);
+            next_xp += needed_xp;
         }
-        return xp;
+
+        return next_xp;
     }
 
     fn _needed_xp_l(&self, level: i32) -> i64 {
-        let needed_xp = (100.0 * 1.75_f64.powf((level - 1) as f64 / 8.0) / 4.7) as i64;
+        let needed_xp = (150.0 * 1.75_f64.powf((level - 1) as f64 / 8.0) / 4.7).floor() as i64;
         return needed_xp;
     }
 

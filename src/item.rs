@@ -1,7 +1,7 @@
 use std::{str::FromStr, fmt::Display};
 
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{json, Value};
 
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 pub enum Material {
@@ -54,12 +54,11 @@ impl Item {
         self.quantity += quantity;
     }
 
-    pub fn serialize(&self) -> String {
+    pub fn serialize(&self) -> Value {
         json!({
             "material": self.material,
             "quantity": self.quantity,
         })
-        .to_string()
     }
 
     pub fn deserialize(json: &serde_json::Value) -> Item {

@@ -4,13 +4,15 @@ use lazy_static::lazy_static;
 use text_io::read;
 
 use crate::{
+    inventory::view_inventory,
     io_manager::clear_screen,
     player::{Action, Player},
-    skilling::skilling_menu, inventory::view_inventory,
+    skilling::skilling_menu,
 };
 
 pub static TICK_RATE: u32 = 20;
 pub static action: Mutex<Action> = Mutex::new(Action::IDLE);
+pub static loaded: Mutex<bool> = Mutex::new(false);
 lazy_static! {
     pub static ref PLAYER: Mutex<Player> = Mutex::new(Player::empty());
 }

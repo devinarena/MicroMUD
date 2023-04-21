@@ -26,7 +26,7 @@ pub fn woodcut(tree: &dyn TreeData) {
     drop(act);
 
     while *action.lock().unwrap() == Action::CHOPPING {
-        let roll = random::<u32>() % 100;
+        let roll = random::<u32>() % (100 - (pl.get_level(&"woodcutting".to_string()) / 2).min(20) as u32);
 
         if roll < tree.get_success_rate() {
             println!("You chop the tree and get some logs. (+{} woodcutting xp)", tree.get_xp());

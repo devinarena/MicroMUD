@@ -29,6 +29,6 @@ impl TreeData for NormalTree {
     }
 
     fn get_success_rate(&self) -> u32 {
-        10
+        25
     }
 }
