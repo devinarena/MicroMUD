@@ -2,7 +2,10 @@ use std::{collections::HashMap, fmt::Display};
 
 use serde_json::{json, Value};
 
-use crate::{inventory::Inventory, item::Item};
+use crate::{
+    inventory::Inventory,
+    item::{Item, Material},
+};
 
 #[derive(Clone, PartialEq)]
 pub enum Action {
@@ -26,6 +29,7 @@ pub struct Player {
     class: String,
     xp: HashMap<String, i64>,
     inventory: Inventory,
+    gold: u64,
     health: i32,
     location: String,
 }
@@ -37,6 +41,7 @@ impl Player {
             class,
             xp: HashMap::new(),
             inventory: Inventory::new(),
+            gold: 0,
             health: 100,
             location: "Littlewood Town".to_string(),
         };
@@ -48,9 +53,12 @@ impl Player {
         player.xp.insert("mining".to_string(), 0);
         player.xp.insert("smithing".to_string(), 0);
         player.xp.insert("woodcutting".to_string(), 0);
+        player.xp.insert("firemaking".to_string(), 0);
         player.xp.insert("fishing".to_string(), 0);
         player.xp.insert("cooking".to_string(), 0);
         player.xp.insert("farming".to_string(), 0);
+
+        player.inventory.add_item(Item::new(Material::WoodenAxe, 1));
 
         return player;
     }
@@ -61,9 +69,35 @@ impl Player {
             class: "".to_string(),
             xp: HashMap::new(),
             inventory: Inventory::new(),
+            gold: 0,
             health: 0,
             location: "".to_string(),
         }
+    }
+
+    pub fn equip(&mut self, index: usize) -> String {
+        let item = self.inventory.get_item(index).clone();
+
+        let mat = item.get_material();
+        let req = mat.get_required_level_equip();
+        if self.get_level(&req.0.to_string()) < req.1 {
+            return format!(
+                "You need level {} {} to equip this item.",
+                req.1, req.0
+            );
+        }
+
+        self.inventory.remove_item(index);
+
+        let old = self.inventory.main_hand.take();
+
+        self.inventory.set_main_hand(item);
+
+        if let Some(i) = old {
+            self.inventory.add_item(i);
+        }
+
+        String::new()
     }
 
     pub fn deserialize(json: &Value) -> Player {
@@ -74,6 +108,7 @@ impl Player {
             class,
             xp: HashMap::new(),
             inventory: Inventory::new(),
+            gold: json["gold"].as_u64().unwrap(),
             health: 100,
             location: "Littlewood Town".to_string(),
         };
@@ -103,6 +138,10 @@ impl Player {
             json["xp"]["woodcutting"].as_i64().unwrap(),
         );
         player.xp.insert(
+            "firemaking".to_string(),
+            json["xp"]["firemaking"].as_i64().unwrap(),
+        );
+        player.xp.insert(
             "fishing".to_string(),
             json["xp"]["fishing"].as_i64().unwrap(),
         );
@@ -110,14 +149,8 @@ impl Player {
             "cooking".to_string(),
             json["xp"]["cooking"].as_i64().unwrap(),
         );
-        player.xp.insert(
-            "farming".to_string(),
-            json["xp"]["farming"].as_i64().unwrap(),
-        );
 
-        for item in json["inventory"]["items"].as_array().unwrap() {
-            player.inventory.add_item(Item::deserialize(item));
-        }
+        player.inventory.deserialize(&json["inventory"]);
 
         return player;
     }
@@ -134,16 +167,25 @@ impl Player {
                 "mining": self.xp["mining"],
                 "smithing": self.xp["smithing"],
                 "woodcutting": self.xp["woodcutting"],
+                "firemaking": self.xp["firemaking"],
                 "fishing": self.xp["fishing"],
                 "cooking": self.xp["cooking"],
-                "farming": self.xp["farming"],
             },
             "inventory": self.inventory.serialize(),
+            "gold": self.gold,
         })
         .to_string()
     }
 
-    pub fn get_inventory(&mut self) -> &mut Inventory {
+    pub fn get_health(&self) -> i32 {
+        self.health
+    }
+
+    pub fn get_inventory(&self) -> &Inventory {
+        &self.inventory
+    }
+
+    pub fn get_inventory_mut(&mut self) -> &mut Inventory {
         &mut self.inventory
     }
 
@@ -167,10 +209,10 @@ impl Player {
         self.xp[skill]
     }
 
-    pub fn get_level(&self, skill: &String) -> i32 {
+    pub fn get_level(&self, skill: &String) -> u32 {
         let mut xp = self.xp[skill] as f64;
 
-        let mut level: i32 = 1;
+        let mut level: u32 = 1;
 
         while xp >= 0.0 {
             let needed_xp = self._needed_xp_l(level);
@@ -181,11 +223,15 @@ impl Player {
         return level - 1;
     }
 
+    pub fn get_gold(&self) -> u64 {
+        self.gold
+    }
+
     pub fn needed_xp(&self, skill: &String) -> i64 {
         let level = self.get_level(skill);
         let mut next_xp = 0;
-        
-        for i in 1..level+1 {
+
+        for i in 1..level + 1 {
             let needed_xp = self._needed_xp_l(i);
             next_xp += needed_xp;
         }
@@ -193,7 +239,7 @@ impl Player {
         return next_xp;
     }
 
-    fn _needed_xp_l(&self, level: i32) -> i64 {
+    fn _needed_xp_l(&self, level: u32) -> i64 {
         let needed_xp = (150.0 * 1.75_f64.powf((level - 1) as f64 / 8.0) / 4.7).floor() as i64;
         return needed_xp;
     }
@@ -210,6 +256,28 @@ impl Player {
                 "Congratulations! You have just advanced a level in {}! You are now level {}.",
                 skill,
                 self.get_level(skill)
+            );
+        }
+    }
+
+    pub fn add_gold(&mut self, gold: u64) {
+        self.gold += gold;
+    }
+
+    pub fn print_stats(&self) {
+        println!("Name: {}", self.name);
+        println!("  Class: {}", self.class);
+        println!("  Location: {}", self.location);
+        println!("  Health: {}", self.health);
+        println!("  Gold: {}g", self.gold);
+        println!("  Skills:");
+        for (skill, xp) in &self.xp {
+            println!(
+                "    {}: {} ({} / {})",
+                skill,
+                self.get_level(skill),
+                xp,
+                self.needed_xp(skill)
             );
         }
     }

@@ -5,6 +5,10 @@ pub trait TreeData {
     fn get_xp(&self) -> i64;
     fn get_result(&self) -> Item;
     fn get_success_rate(&self) -> u32;
+    fn get_required_level(&self) -> u32;
+    fn get_apple_chance(&self) -> u32 {
+        0
+    }
 }
 
 pub struct NormalTree {}
@@ -25,10 +29,84 @@ impl TreeData for NormalTree {
     }
 
     fn get_result(&self) -> Item {
-        Item::new(Material::LOG, 1).clone()
+        Item::new(Material::Log, 1).clone()
     }
 
     fn get_success_rate(&self) -> u32 {
+        20
+    }
+
+    fn get_required_level(&self) -> u32 {
+        1
+    }
+}
+
+pub struct OakTree {}
+
+impl OakTree {
+    pub fn new() -> OakTree {
+        OakTree {}
+    }
+}
+
+impl TreeData for OakTree {
+    fn get_name(&self) -> String {
+        "Oak Tree".to_string()
+    }
+
+    fn get_xp(&self) -> i64 {
+        15
+    }
+
+    fn get_result(&self) -> Item {
+        Item::new(Material::OakLog, 1).clone()
+    }
+
+    fn get_success_rate(&self) -> u32 {
+        15
+    }
+
+    fn get_required_level(&self) -> u32 {
+        15
+    }
+
+    fn get_apple_chance(&self) -> u32 {
+        3
+    }
+}
+
+pub struct BirchTree {
+
+}
+
+impl BirchTree {
+    pub fn new() -> BirchTree {
+        BirchTree {}
+    }
+}
+
+impl TreeData for BirchTree {
+    fn get_name(&self) -> String {
+        "Birch Tree".to_string()
+    }
+
+    fn get_xp(&self) -> i64 {
+        20
+    }
+
+    fn get_result(&self) -> Item {
+        Item::new(Material::BirchLog, 1).clone()
+    }
+
+    fn get_success_rate(&self) -> u32 {
+        14
+    }
+
+    fn get_required_level(&self) -> u32 {
         25
+    }
+
+    fn get_apple_chance(&self) -> u32 {
+        5
     }
 }

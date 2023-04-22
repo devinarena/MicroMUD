@@ -3,16 +3,16 @@ use std::thread;
 use text_io::read;
 
 use crate::{
-    game::{action, game_loop, PLAYER, loaded},
+    game::{ACTION, game_loop, PLAYER, LOADED},
     io_manager::{clear_screen, get_all_saves, read_player_save, write_player_save},
     player::{Action, Player},
 };
 
 fn setup_ctrl_c_handler() {
     ctrlc::set_handler(move || {
-        let mut act = action.lock().unwrap();
+        let mut act = ACTION.lock().unwrap();
         if *act == Action::IDLE {
-            if !*loaded.lock().unwrap() {
+            if !*LOADED.lock().unwrap() {
                 println!("Exiting without saving...");
                 thread::sleep(std::time::Duration::from_millis(1000));
                 std::process::exit(0);
@@ -44,7 +44,7 @@ pub fn create_character_menu() {
     println!("Enter your class:");
 
     *PLAYER.lock().unwrap() = Player::new(name, "Warrior".to_string());
-    *loaded.lock().unwrap() = true;
+    *LOADED.lock().unwrap() = true;
     write_player_save();
 }
 
@@ -67,7 +67,7 @@ pub fn load_character_menu(saves: &Vec<String>) {
     let save = saves[input - 1].clone();
 
     *PLAYER.lock().unwrap() = read_player_save(&save);
-    *loaded.lock().unwrap() = true;
+    *LOADED.lock().unwrap() = true;
 }
 
 pub fn main_menu() {
@@ -78,7 +78,7 @@ pub fn main_menu() {
     let mut input = 0;
 
     while input != 3 {
-        *loaded.lock().unwrap() = false;
+        *LOADED.lock().unwrap() = false;
         println!("Welcome to MicroMUD!");
 
         let saves = get_all_saves();

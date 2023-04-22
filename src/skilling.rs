@@ -1,8 +1,6 @@
 use text_io::read;
 
-use crate::{
-    game::PLAYER, io_manager::clear_screen, player::Player, skills::woodcutting::woodcutting_menu,
-};
+use crate::{game::PLAYER, io_manager::clear_screen, skills::woodcutting::woodcutting_menu};
 
 pub fn print_skills() {
     let pl = &PLAYER.lock().unwrap();
@@ -13,7 +11,7 @@ pub fn print_skills() {
     println!("Current skills:");
     for skill in skills {
         println!(
-            "{}: {} ({} / {})",
+            "  {}: {} ({} / {})",
             skill,
             pl.get_level(&skill),
             pl.get_xp(&skill),
