@@ -6,8 +6,9 @@ use serde_json::{json, Value};
 #[derive(PartialEq)]
 pub enum MaterialType {
     Log,
-    Axe,
     Food,
+    Axe,
+    Gloves,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Copy)]
@@ -18,6 +19,7 @@ pub enum Material {
     Apple,
     WoodenAxe,
     BronzeAxe,
+    LeatherGloves,
     // IronAxe,
     // SteelAxe,
     // GoldenAxe,
@@ -34,6 +36,7 @@ impl Material {
             Material::Apple => "Apple".to_string(),
             Material::WoodenAxe => "Wooden Axe".to_string(),
             Material::BronzeAxe => "Bronze Axe".to_string(),
+            Material::LeatherGloves => "Leather Gloves".to_string(),
         }
     }
 
@@ -45,6 +48,7 @@ impl Material {
             Material::Apple => MaterialType::Food,
             Material::WoodenAxe => MaterialType::Axe,
             Material::BronzeAxe => MaterialType::Axe,
+            Material::LeatherGloves => MaterialType::Gloves,
         }
     }
 
@@ -56,6 +60,7 @@ impl Material {
             Material::Apple => 25,
             Material::WoodenAxe => 50,
             Material::BronzeAxe => 250,
+            Material::LeatherGloves => 100,
         }
     }
 
@@ -101,6 +106,9 @@ impl Material {
             Material::BronzeAxe => {
                 println!("Bronze axe is a slightly better tool used to gather logs from trees.")
             }
+            Material::LeatherGloves => {
+                println!("Leather gloves can be worn on the hands to firemake.");
+            }
             _ => println!("No description"),
         }
     }
@@ -122,9 +130,10 @@ impl FromStr for Material {
             "Log" => Ok(Material::Log),
             "OakLog" => Ok(Material::OakLog),
             "BirchLog" => Ok(Material::BirchLog),
+            "Apple" => Ok(Material::Apple),
             "WoodenAxe" => Ok(Material::WoodenAxe),
             "BronzeAxe" => Ok(Material::BronzeAxe),
-            "Apple" => Ok(Material::Apple),
+            "LeatherGloves" => Ok(Material::LeatherGloves),
             _ => Err(()),
         }
     }

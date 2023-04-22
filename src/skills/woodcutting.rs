@@ -43,7 +43,6 @@ pub fn woodcut(tree: &dyn TreeData) {
 
     let mut act = ACTION.lock().unwrap();
     *act = Action::CHOPPING;
-
     drop(act);
 
     while *ACTION.lock().unwrap() == Action::CHOPPING {
@@ -92,7 +91,7 @@ pub fn woodcut(tree: &dyn TreeData) {
     }
 
     println!("You stop chopping the tree.");
-    thread::sleep(Duration::new(1, 0));
+    thread::sleep(Duration::new(3, 0));
 }
 
 pub fn woodcutting_menu() {

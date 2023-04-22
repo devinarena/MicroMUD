@@ -2,7 +2,7 @@ use crate::item::{Item, Material};
 
 pub trait TreeData {
     fn get_name(&self) -> String;
-    fn get_xp(&self) -> i64;
+    fn get_xp(&self) -> u64;
     fn get_result(&self) -> Item;
     fn get_success_rate(&self) -> u32;
     fn get_required_level(&self) -> u32;
@@ -24,7 +24,7 @@ impl TreeData for NormalTree {
         "Normal Tree".to_string()
     }
 
-    fn get_xp(&self) -> i64 {
+    fn get_xp(&self) -> u64 {
         8
     }
 
@@ -54,7 +54,7 @@ impl TreeData for OakTree {
         "Oak Tree".to_string()
     }
 
-    fn get_xp(&self) -> i64 {
+    fn get_xp(&self) -> u64 {
         15
     }
 
@@ -90,7 +90,7 @@ impl TreeData for BirchTree {
         "Birch Tree".to_string()
     }
 
-    fn get_xp(&self) -> i64 {
+    fn get_xp(&self) -> u64 {
         20
     }
 

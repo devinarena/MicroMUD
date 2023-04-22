@@ -12,6 +12,7 @@ pub enum Action {
     EXITING,
     IDLE,
     CHOPPING,
+    FIREMAKING,
 }
 
 impl Display for Action {
@@ -20,6 +21,7 @@ impl Display for Action {
             Action::EXITING => write!(f, "exiting"),
             Action::IDLE => write!(f, "idle"),
             Action::CHOPPING => write!(f, "chopping"),
+            Action::FIREMAKING => write!(f, "firemaking"),
         }
     }
 }
@@ -27,7 +29,7 @@ impl Display for Action {
 pub struct Player {
     name: String,
     class: String,
-    xp: HashMap<String, i64>,
+    xp: HashMap<String, u64>,
     inventory: Inventory,
     gold: u64,
     health: i32,
@@ -115,39 +117,39 @@ impl Player {
 
         player.xp.insert(
             "hitpoints".to_string(),
-            json["xp"]["hitpoints"].as_i64().unwrap(),
+            json["xp"]["hitpoints"].as_u64().unwrap(),
         );
         player
             .xp
-            .insert("melee".to_string(), json["xp"]["melee"].as_i64().unwrap());
+            .insert("melee".to_string(), json["xp"]["melee"].as_u64().unwrap());
         player
             .xp
-            .insert("ranged".to_string(), json["xp"]["ranged"].as_i64().unwrap());
+            .insert("ranged".to_string(), json["xp"]["ranged"].as_u64().unwrap());
         player
             .xp
-            .insert("magic".to_string(), json["xp"]["magic"].as_i64().unwrap());
+            .insert("magic".to_string(), json["xp"]["magic"].as_u64().unwrap());
         player
             .xp
-            .insert("mining".to_string(), json["xp"]["mining"].as_i64().unwrap());
+            .insert("mining".to_string(), json["xp"]["mining"].as_u64().unwrap());
         player.xp.insert(
             "smithing".to_string(),
-            json["xp"]["smithing"].as_i64().unwrap(),
+            json["xp"]["smithing"].as_u64().unwrap(),
         );
         player.xp.insert(
             "woodcutting".to_string(),
-            json["xp"]["woodcutting"].as_i64().unwrap(),
+            json["xp"]["woodcutting"].as_u64().unwrap(),
         );
         player.xp.insert(
             "firemaking".to_string(),
-            json["xp"]["firemaking"].as_i64().unwrap(),
+            json["xp"]["firemaking"].as_u64().unwrap(),
         );
         player.xp.insert(
             "fishing".to_string(),
-            json["xp"]["fishing"].as_i64().unwrap(),
+            json["xp"]["fishing"].as_u64().unwrap(),
         );
         player.xp.insert(
             "cooking".to_string(),
-            json["xp"]["cooking"].as_i64().unwrap(),
+            json["xp"]["cooking"].as_u64().unwrap(),
         );
 
         player.inventory.deserialize(&json["inventory"]);
@@ -189,7 +191,7 @@ impl Player {
         &mut self.inventory
     }
 
-    pub fn get_skills(&self) -> &HashMap<String, i64> {
+    pub fn get_skills(&self) -> &HashMap<String, u64> {
         &self.xp
     }
 
@@ -205,7 +207,7 @@ impl Player {
         self.location.clone()
     }
 
-    pub fn get_xp(&self, skill: &String) -> i64 {
+    pub fn get_xp(&self, skill: &String) -> u64 {
         self.xp[skill]
     }
 
@@ -227,7 +229,7 @@ impl Player {
         self.gold
     }
 
-    pub fn needed_xp(&self, skill: &String) -> i64 {
+    pub fn needed_xp(&self, skill: &String) -> u64 {
         let level = self.get_level(skill);
         let mut next_xp = 0;
 
@@ -239,12 +241,12 @@ impl Player {
         return next_xp;
     }
 
-    fn _needed_xp_l(&self, level: u32) -> i64 {
-        let needed_xp = (150.0 * 1.75_f64.powf((level - 1) as f64 / 8.0) / 4.7).floor() as i64;
+    fn _needed_xp_l(&self, level: u32) -> u64 {
+        let needed_xp = (150.0 * 1.75_f64.powf((level - 1) as f64 / 8.0) / 4.7) as u64;
         return needed_xp;
     }
 
-    pub fn add_xp(&mut self, skill: &String, xp: i64) {
+    pub fn add_xp(&mut self, skill: &String, xp: u64) {
         let needed_xp = self.needed_xp(skill);
 
         let old_xp = self.xp[skill];
