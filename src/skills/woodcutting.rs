@@ -13,7 +13,7 @@ use crate::{
     skills::woodcutting::tree::NormalTree,
 };
 
-use self::tree::{OakTree, TreeData, BirchTree};
+use self::tree::{BirchTree, OakTree, TreeData};
 
 pub fn woodcut(tree: &dyn TreeData) {
     clear_screen();
@@ -22,7 +22,14 @@ pub fn woodcut(tree: &dyn TreeData) {
     let mut pl = PLAYER.lock().unwrap();
     let mh = pl.get_inventory().get_main_hand().clone();
 
-    if mh.is_none() || mh.as_ref().expect("Unexpected item").get_material().get_type() != MaterialType::Axe {
+    if mh.is_none()
+        || mh
+            .as_ref()
+            .expect("Unexpected item")
+            .get_material()
+            .get_type()
+            != MaterialType::Axe
+    {
         println!("You don't have an axe equipped!");
         thread::sleep(Duration::new(1, 0));
         return;

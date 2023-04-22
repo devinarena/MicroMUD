@@ -1,9 +1,8 @@
-use crate::item::{Material, Item};
+use rand::random;
 
-use super::monster::MonsterData;
+use crate::item::{Item, Material};
 
-
-
+use super::MonsterData;
 
 pub struct Rat {}
 
@@ -16,10 +15,6 @@ impl Rat {
 impl MonsterData for Rat {
     fn get_name(&self) -> String {
         "Rat".to_string()
-    }
-
-    fn get_max_hp(&self) -> u32 {
-        30
     }
 
     fn get_attack_style(&self) -> String {
@@ -38,7 +33,19 @@ impl MonsterData for Rat {
         1
     }
 
-    fn get_drops(&self) -> Vec<(Item, f32)> {
-        vec![(Item::new(Material::Log, 1).clone(), 1.0)]
+    fn get_hitpoints(&self) -> u32 {
+        1
+    }
+
+    fn get_defence(&self) -> u32 {
+        1
+    }
+
+    fn get_drops(&self) -> Vec<(Material, u32, u32, f32)> {
+        vec![(Material::Log, 1, 1, 0.1)]
+    }
+
+    fn get_gold(&self) -> u64 {
+        random::<u64>() % 10
     }
 }

@@ -14,12 +14,12 @@ fn setup_ctrl_c_handler() {
         if *act == Action::IDLE {
             if !*LOADED.lock().unwrap() {
                 println!("Exiting without saving...");
-                thread::sleep(std::time::Duration::from_millis(1000));
+                thread::sleep(std::time::Duration::from_millis(500));
                 std::process::exit(0);
             }
             write_player_save();
             println!("Saving and exiting...");
-            thread::sleep(std::time::Duration::from_millis(1000));
+            thread::sleep(std::time::Duration::from_millis(500));
             std::process::exit(0);
         } else {
             if *act != Action::COMBAT {

@@ -4,39 +4,66 @@ use rand::random;
 use text_io::read;
 
 use crate::{
-    combat::{monster::{MonsterData}, rat::Rat},
-    game::{PLAYER, ACTION},
-    io_manager::clear_screen, player::Action,
+    combat::monsters::{rat::Rat, tree_spirit::TreeSpirit},
+    game::{ACTION, PLAYER},
+    io_manager::clear_screen,
+    item::Item,
+    player::Action,
 };
 
-pub mod monster;
-pub mod rat;
+use self::monsters::MonsterData;
+
+pub mod monsters;
 
 fn fight(monster: &Box<dyn MonsterData>) {
     let mut pl = PLAYER.lock().unwrap();
 
     let mut health: i32 = pl.get_health();
-    let mut ehealth: i32 = monster.get_max_hp() as i32;
+    let mut ehealth: i32 = (monster.get_hitpoints() * 100) as i32;
+    let emax_health = health;
 
-    let elevel = ((monster.get_melee() + monster.get_magic() + monster.get_ranged()) as f32 / 3.0) as i32;
+    let pl_level = (pl.get_level(&"melee".to_string())
+        + pl.get_level(&"ranged".to_string())
+        + pl.get_level(&"magic".to_string())
+        + pl.get_level(&"defense".to_string())) as f32
+        / 4.0;
+
+    let elevel =
+        ((monster.get_melee() + monster.get_magic() + monster.get_ranged() + monster.get_defence())
+            as f32
+            / 4.0) as i32;
+    let eattack = match monster.get_attack_style().as_str() {
+        "melee" => monster.get_melee(),
+        "ranged" => monster.get_ranged(),
+        "magic" => monster.get_magic(),
+        _ => 0,
+    };
 
     *ACTION.lock().unwrap() = Action::COMBAT;
 
-    while health > 0 && ehealth > 0  {
+    while health > 0 && ehealth > 0 {
         clear_screen();
 
         println!(
-            "{}: {} / {}\n",
+            "BATTLE BETWEEN {} (LVL {}) AND YOU (LVL {})",
             monster.get_name(),
-            ehealth,
-            monster.get_max_hp()
+            elevel as u32,
+            pl_level as u32
         );
+        println!("========================================\n");
+
+        let pl_attack = pl.get_level(&"melee".to_string());
+        let pl_defense = pl.get_level(&"defense".to_string());
+
+        println!("> {}: {} / {}\n", monster.get_name(), ehealth, emax_health);
 
         println!(
-            "You: {} / {}",
+            "> You: {} / {}",
             health,
             pl.get_level(&"hitpoints".to_string()) * 100
         );
+
+        println!("\n========================================");
 
         println!("\nWhat would you like to do?");
         println!("1. Attack");
@@ -55,8 +82,10 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         match input {
             1 => {
-                let damage: i32 =
-                    (pl.get_level(&"melee".to_string()) as f32 * 20.0 * random::<f32>()) as i32;
+                let max_hit = (10.0 * (pl_attack as f64 + 1.0).log2()
+                    / (monster.get_defence() as f64 + 1.0).log(4.0))
+                    as i32;
+                let damage = (max_hit as f32 * random::<f32>()) as i32;
                 ehealth -= damage;
                 println!(
                     "You hit the {} for {} melee damage.",
@@ -66,12 +95,15 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
                 thread::sleep(Duration::from_secs(1));
 
-                let edmg = (monster.get_melee() as f32 * 20.0 * random::<f32>()) as i32;
+                let e_max_hit = (10.0 * (eattack as f64 + 1.0).log2()
+                    / (pl_defense as f64 + 1.0).log(4.0)) as i32;
+                let edmg = (e_max_hit as f32 * random::<f32>()) as i32;
                 health -= edmg;
                 println!(
-                    "The {} hits you for {} melee damage.",
+                    "The {} hits you for {} {} damage.",
                     monster.get_name(),
-                    edmg
+                    edmg,
+                    monster.get_attack_style(),
                 );
 
                 thread::sleep(Duration::from_secs(2));
@@ -98,19 +130,31 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         thread::sleep(Duration::from_secs(1));
 
-        let xp = (elevel * 8) as u64;
-        let hpxp = xp * 3 / 5;;
+        let xp = (elevel * 75) as u64;
+        let hp_xp = (monster.get_hitpoints() * 50) as u64;
+        let defense_xp = (pl.get_level(&"hitpoints".to_string()) * 10 - health as u32) * 10;
         pl.add_xp(&"melee".to_string(), xp);
-        pl.add_xp(&"hitpoints".to_string(), hpxp);
+        pl.add_xp(&"hitpoints".to_string(), hp_xp);
+        pl.add_xp(&"defense".to_string(), defense_xp as u64);
 
-        println!("You gained {} melee xp and {} hitpoints xp.", xp, hpxp);
+        println!(
+            "You gained {} melee xp, {} xp, and {} hitpoints xp.",
+            xp, defense_xp, hp_xp
+        );
 
         thread::sleep(Duration::from_secs(1));
 
-        for (item, chance) in monster.get_drops() {
+        let gold = monster.get_gold();
+
+        println!("{} dropped {}g!", monster.get_name(), gold);
+        pl.add_gold(gold);
+
+        for (material, min, max, chance) in monster.get_drops() {
             if random::<f32>() < chance {
-                println!("Rat dropped {} x {}!", item.get_quantity(), item.get_material().get_name());
-                pl.get_inventory_mut().add_item(item);
+                let quantity = random::<u32>() % (max - min) + min;
+                println!("Rat dropped {} x {}!", quantity, material);
+                pl.get_inventory_mut()
+                    .add_item(Item::new(material, quantity as i32));
             }
         }
 
@@ -124,13 +168,39 @@ fn fight(monster: &Box<dyn MonsterData>) {
     thread::sleep(std::time::Duration::from_secs(3));
 }
 
+fn print_combat_stats() {
+    let pl = PLAYER.lock().unwrap();
+    let melee = &"melee".to_string();
+    let ranged = &"ranged".to_string();
+    let magic = &"magic".to_string();
+    let defense = &"defense".to_string();
+    let hitpoints = &"hitpoints".to_string();
+
+    let total_lvl =
+        (pl.get_level(melee) + pl.get_level(ranged) + pl.get_level(magic) + pl.get_level(defense))
+            / 4;
+
+    println!("Combat Stats (Total LVL: {})", total_lvl);
+    println!("============");
+    println!("Melee: {} ({} / {})", pl.get_level(melee), pl.get_xp(melee), pl.needed_xp(melee));
+    println!("Ranged: {} ({} / {})", pl.get_level(ranged), pl.get_xp(ranged), pl.needed_xp(ranged));
+    println!("Magic: {} ({} / {})", pl.get_level(magic), pl.get_xp(magic), pl.needed_xp(magic));
+    println!("Defense: {} ({} / {})", pl.get_level(defense), pl.get_xp(defense), pl.needed_xp(defense));
+    println!("Hitpoints: {} ({} / {})", pl.get_level(hitpoints), pl.get_xp(hitpoints), pl.needed_xp(hitpoints));
+    println!("============\n");
+}
+
 pub fn combat_menu() {
     clear_screen();
+
+    print_combat_stats();
 
     println!("Combat Menu");
     println!("What would you like to fight?");
 
-    let monsters: Vec<Box<dyn MonsterData>> = vec![Box::new(Rat::new())];
+    let mut monsters: Vec<Box<dyn MonsterData>> = Vec::new();
+    monsters.push(Box::new(Rat::new()));
+    monsters.push(Box::new(TreeSpirit::new()));
 
     let mut i = 1;
     for monster in &monsters {
@@ -159,7 +229,7 @@ pub fn combat_menu() {
         return;
     }
 
-    let monster = &monsters[(input - 1) as usize];
+    let monster: &Box<dyn MonsterData> = &monsters[(input - 1) as usize];
 
     fight(monster);
 }

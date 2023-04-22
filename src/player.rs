@@ -52,6 +52,7 @@ impl Player {
 
         player.xp.insert("hitpoints".to_string(), 0);
         player.xp.insert("melee".to_string(), 0);
+        player.xp.insert("defense".to_string(), 0);
         player.xp.insert("ranged".to_string(), 0);
         player.xp.insert("magic".to_string(), 0);
         player.xp.insert("mining".to_string(), 0);
@@ -85,10 +86,7 @@ impl Player {
         let mat = item.get_material();
         let req = mat.get_required_level_equip();
         if self.get_level(&req.0.to_string()) < req.1 {
-            return format!(
-                "You need level {} {} to equip this item.",
-                req.1, req.0
-            );
+            return format!("You need level {} {} to equip this item.", req.1, req.0);
         }
 
         self.inventory.remove_item(index);
@@ -124,6 +122,10 @@ impl Player {
         player
             .xp
             .insert("melee".to_string(), json["xp"]["melee"].as_u64().unwrap());
+        player.xp.insert(
+            "defense".to_string(),
+            json["xp"]["defense"].as_u64().unwrap(),
+        );
         player
             .xp
             .insert("ranged".to_string(), json["xp"]["ranged"].as_u64().unwrap());
@@ -166,6 +168,7 @@ impl Player {
             "xp": {
                 "hitpoints": self.xp["hitpoints"],
                 "melee": self.xp["melee"],
+                "defense": self.xp["defense"],
                 "ranged": self.xp["ranged"],
                 "magic": self.xp["magic"],
                 "mining": self.xp["mining"],

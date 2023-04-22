@@ -1,23 +1,20 @@
+use rand::random;
+
 use crate::item::{Material, Item};
 
-use super::monster::MonsterData;
-
+use super::MonsterData;
 
 pub struct TreeSpirit {}
 
 impl TreeSpirit {
     pub fn new() -> TreeSpirit {
-        Rat {}
+        TreeSpirit {}
     }
 }
 
 impl MonsterData for TreeSpirit {
     fn get_name(&self) -> String {
         "Tree Spirit".to_string()
-    }
-
-    fn get_max_hp(&self) -> u32 {
-        50
     }
 
     fn get_attack_style(&self) -> String {
@@ -36,11 +33,19 @@ impl MonsterData for TreeSpirit {
         1
     }
 
-    fn get_xp(&self) -> u64 {
-        10
+    fn get_hitpoints(&self) -> u32 {
+        1
     }
 
-    fn get_drops(&self) -> Vec<(Item, f32)> {
-        vec![(Item::new(Material::Log, 1).clone(), 1.0)]
+    fn get_defence(&self) -> u32 {
+        1
+    }
+
+    fn get_drops(&self) -> Vec<(Material, u32, u32, f32)> {
+        vec![(Material::Log, 1, 3, 1.0)]
+    }
+
+    fn get_gold(&self) -> u64 {
+        random::<u64>() % 10
     }
 }
