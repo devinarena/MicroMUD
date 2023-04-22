@@ -35,7 +35,6 @@ pub fn firemake(material: Material) {
     *act = Action::FIREMAKING;
     drop(act);
 
-
     let index = pl.get_inventory().find_item_index(material);
 
     if index.is_none() {
@@ -91,15 +90,13 @@ pub fn firemaking_menu() {
 
     let mut i = 1;
     for material in &burnable {
-        if material.get_firemaking_xp() > 0 {
-            println!(
-                "  {}. {} ({} xp) (req: 1x{})",
-                i,
-                material.get_name(),
-                material.get_firemaking_xp(),
-                material.get_name()
-            );
-        }
+        println!(
+            "  {}. {} ({} xp) (req: 1x{})",
+            i,
+            material.get_name(),
+            material.get_firemaking_xp(),
+            material.get_name()
+        );
         i += 1;
     }
 

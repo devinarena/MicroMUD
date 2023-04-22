@@ -13,6 +13,7 @@ pub enum Action {
     IDLE,
     CHOPPING,
     FIREMAKING,
+    COMBAT,
 }
 
 impl Display for Action {
@@ -22,6 +23,7 @@ impl Display for Action {
             Action::IDLE => write!(f, "idle"),
             Action::CHOPPING => write!(f, "chopping"),
             Action::FIREMAKING => write!(f, "firemaking"),
+            Action::COMBAT => write!(f, "combat"),
         }
     }
 }
@@ -180,7 +182,7 @@ impl Player {
     }
 
     pub fn get_health(&self) -> i32 {
-        self.health
+        self.get_level(&"hitpoints".to_string()) as i32 * 100
     }
 
     pub fn get_inventory(&self) -> &Inventory {

@@ -3,7 +3,7 @@ use std::thread;
 use text_io::read;
 
 use crate::{
-    game::{ACTION, game_loop, PLAYER, LOADED},
+    game::{game_loop, ACTION, LOADED, PLAYER},
     io_manager::{clear_screen, get_all_saves, read_player_save, write_player_save},
     player::{Action, Player},
 };
@@ -22,7 +22,9 @@ fn setup_ctrl_c_handler() {
             thread::sleep(std::time::Duration::from_millis(1000));
             std::process::exit(0);
         } else {
-            *act = Action::IDLE;
+            if *act != Action::COMBAT {
+                *act = Action::IDLE;
+            }
         }
     })
     .expect("Error setting Ctrl-C handler");
@@ -108,9 +110,7 @@ pub fn main_menu() {
 
                 game_loop();
             }
-            3 => {
-                
-            }
+            3 => {}
             _ => {
                 println!("Invalid input.");
             }

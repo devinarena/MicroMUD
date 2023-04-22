@@ -12,6 +12,7 @@ pub mod player;
 pub mod skilling;
 pub mod skills;
 pub mod startup;
+pub mod combat;
 
 fn main() {
     main_menu();

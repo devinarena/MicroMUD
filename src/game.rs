@@ -1,5 +1,5 @@
 use std::{
-    io::{stdout, Read, Write},
+    io::{stdout, Write},
     sync::Mutex,
     thread,
     time::Duration,
@@ -12,7 +12,7 @@ use crate::{
     inventory::view_inventory,
     io_manager::{clear_screen, write_player_save},
     player::{Action, Player},
-    skilling::skilling_menu,
+    skilling::skilling_menu, combat::combat_menu,
 };
 
 pub static TICK_RATE: u32 = 20;
@@ -65,6 +65,9 @@ pub fn game_loop() {
             }
             3 => {
                 skilling_menu();
+            }
+            4 => {
+                combat_menu();
             }
             6 => {
                 stdout().flush().unwrap();
