@@ -142,3 +142,13 @@ pub fn woodcutting_menu() {
         woodcut(trees[input - 1].as_ref());
     }
 }
+
+impl Material {
+    pub fn get_axe_bonus(&self) -> u32 {
+        match self {
+            Material::WoodenAxe => 1,
+            Material::BronzeAxe => 2,
+            _ => 0,
+        }
+    }
+}

@@ -1,6 +1,9 @@
 use rand::random;
 
-use crate::item::{Item, Material};
+use crate::{
+    item::{Item, Material},
+    player::Player,
+};
 
 use super::MonsterData;
 
@@ -37,15 +40,26 @@ impl MonsterData for Rat {
         1
     }
 
-    fn get_defence(&self) -> u32 {
+    fn get_defense(&self) -> u32 {
         1
     }
 
     fn get_drops(&self) -> Vec<(Material, u32, u32, f32)> {
-        vec![(Material::Log, 1, 1, 0.1)]
+        vec![
+            (Material::Log, 1, 1, 0.25),
+            (Material::LeatherGloves, 1, 1, 0.1),
+        ]
     }
 
     fn get_gold(&self) -> u64 {
         random::<u64>() % 10
+    }
+
+    fn get_reqs(&self) -> String {
+        "".to_string()
+    }
+
+    fn can_fight(&self, player: &Player) -> String {
+        "".to_string()
     }
 }

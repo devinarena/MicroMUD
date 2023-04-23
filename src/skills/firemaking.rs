@@ -81,42 +81,46 @@ pub fn firemake(material: Material) {
 }
 
 pub fn firemaking_menu() {
-    clear_screen();
-
-    println!("Firemaking Menu");
-    println!("Please select what you'd like to burn:");
+    let mut input: u32 = 0;
 
     let burnable = vec![Material::Log, Material::OakLog, Material::BirchLog];
 
-    let mut i = 1;
-    for material in &burnable {
-        println!(
-            "  {}. {} ({} xp) (req: 1x{})",
-            i,
-            material.get_name(),
-            material.get_firemaking_xp(),
-            material.get_name()
-        );
-        i += 1;
-    }
+    while input as usize != burnable.len() + 1 {
+        clear_screen();
 
-    println!("  {}. Main Menu", i);
+        println!("Firemaking Menu");
+        println!("Please select what you'd like to burn:");
 
-    print!("> ");
+        let mut i = 1;
+        for material in &burnable {
+            println!(
+                "  {}. {} ({} xp) (req: 1x{})",
+                i,
+                material.get_name(),
+                material.get_firemaking_xp(),
+                material.get_name()
+            );
+            i += 1;
+        }
 
-    let mut input: u32 = read!();
+        println!("  {}. Main Menu", i);
 
-    while input < 1 || input > i {
-        println!("Invalid input. Please enter a number between 1 and {}.", i);
         print!("> ");
+
         input = read!();
+
+        while input < 1 || input > i {
+            println!("Invalid input. Please enter a number between 1 and {}.", i);
+            print!("> ");
+            input = read!();
+        }
+
+        if input == i {
+            return;
+        }
+
+        let material = burnable[(input - 1) as usize];
+
+        firemake(material);
     }
-
-    if input == i {
-        return;
-    }
-
-    let material = burnable[(input - 1) as usize];
-
-    firemake(material);
 }

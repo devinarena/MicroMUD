@@ -7,7 +7,7 @@ use crate::{
     combat::monsters::{rat::Rat, tree_spirit::TreeSpirit},
     game::{ACTION, PLAYER},
     io_manager::clear_screen,
-    item::Item,
+    item::{Item, Material},
     player::Action,
 };
 
@@ -16,11 +16,19 @@ use self::monsters::MonsterData;
 pub mod monsters;
 
 fn fight(monster: &Box<dyn MonsterData>) {
+    clear_screen();
+
     let mut pl = PLAYER.lock().unwrap();
+    let can_fight = monster.can_fight(&pl);
+    if can_fight != "" {
+        println!("{}", can_fight);
+        thread::sleep(Duration::new(3, 0));
+        return;
+    }
 
     let mut health: i32 = pl.get_health();
     let mut ehealth: i32 = (monster.get_hitpoints() * 100) as i32;
-    let emax_health = health;
+    let emax_health = ehealth;
 
     let pl_level = (pl.get_level(&"melee".to_string())
         + pl.get_level(&"ranged".to_string())
@@ -29,7 +37,7 @@ fn fight(monster: &Box<dyn MonsterData>) {
         / 4.0;
 
     let elevel =
-        ((monster.get_melee() + monster.get_magic() + monster.get_ranged() + monster.get_defence())
+        ((monster.get_melee() + monster.get_magic() + monster.get_ranged() + monster.get_defense())
             as f32
             / 4.0) as i32;
     let eattack = match monster.get_attack_style().as_str() {
@@ -54,6 +62,13 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         let pl_attack = pl.get_level(&"melee".to_string());
         let pl_defense = pl.get_level(&"defense".to_string());
+
+        let mut mh_bonus: u32 = 0;
+        let mh = pl.get_inventory().get_main_hand().clone();
+        if mh.is_some() {
+            let mh_mat = mh.as_ref().unwrap().get_material();
+            mh_bonus = mh_mat.get_melee_bonus();
+        }
 
         println!("> {}: {} / {}\n", monster.get_name(), ehealth, emax_health);
 
@@ -82,9 +97,8 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         match input {
             1 => {
-                let max_hit = (10.0 * (pl_attack as f64 + 1.0).log2()
-                    / (monster.get_defence() as f64 + 1.0).log(4.0))
-                    as i32;
+                let attack_bonus = pl_attack + mh_bonus;
+                let max_hit = _max_hit_comp(attack_bonus, monster.get_defense());
                 let damage = (max_hit as f32 * random::<f32>()) as i32;
                 ehealth -= damage;
                 println!(
@@ -95,8 +109,7 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
                 thread::sleep(Duration::from_secs(1));
 
-                let e_max_hit = (10.0 * (eattack as f64 + 1.0).log2()
-                    / (pl_defense as f64 + 1.0).log(4.0)) as i32;
+                let e_max_hit = _max_hit_comp(eattack, pl_defense);
                 let edmg = (e_max_hit as f32 * random::<f32>()) as i32;
                 health -= edmg;
                 println!(
@@ -130,19 +143,19 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         thread::sleep(Duration::from_secs(1));
 
-        let xp = (elevel * 75) as u64;
-        let hp_xp = (monster.get_hitpoints() * 50) as u64;
-        let defense_xp = (pl.get_level(&"hitpoints".to_string()) * 10 - health as u32) * 10;
+        let xp = (elevel as u64 + monster.get_hitpoints() as u64) * 25;
+        let hp_xp = monster.get_hitpoints() as u64 * 50;
+        let defense_xp = (pl.get_level(&"hitpoints".to_string()) as u64 * 100 - health as u64) / 2;
         pl.add_xp(&"melee".to_string(), xp);
         pl.add_xp(&"hitpoints".to_string(), hp_xp);
-        pl.add_xp(&"defense".to_string(), defense_xp as u64);
+        pl.add_xp(&"defense".to_string(), defense_xp);
 
         println!(
-            "You gained {} melee xp, {} xp, and {} hitpoints xp.",
+            "You gained {} melee xp, {} defense xp, and {} hitpoints xp.",
             xp, defense_xp, hp_xp
         );
 
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(Duration::from_secs(2));
 
         let gold = monster.get_gold();
 
@@ -152,13 +165,13 @@ fn fight(monster: &Box<dyn MonsterData>) {
         for (material, min, max, chance) in monster.get_drops() {
             if random::<f32>() < chance {
                 let quantity = random::<u32>() % (max - min) + min;
-                println!("Rat dropped {} x {}!", quantity, material);
+                println!("{} dropped {} x {}!", monster.get_name(), quantity, material);
                 pl.get_inventory_mut()
                     .add_item(Item::new(material, quantity as i32));
             }
         }
 
-        thread::sleep(Duration::from_secs(2));
+        thread::sleep(Duration::from_secs(3));
     } else {
         println!("You ran away from the {}!", monster.get_name());
     }
@@ -181,13 +194,13 @@ fn print_combat_stats() {
             / 4;
 
     println!("Combat Stats (Total LVL: {})", total_lvl);
-    println!("============");
+    println!("========================");
     println!("Melee: {} ({} / {})", pl.get_level(melee), pl.get_xp(melee), pl.needed_xp(melee));
     println!("Ranged: {} ({} / {})", pl.get_level(ranged), pl.get_xp(ranged), pl.needed_xp(ranged));
     println!("Magic: {} ({} / {})", pl.get_level(magic), pl.get_xp(magic), pl.needed_xp(magic));
     println!("Defense: {} ({} / {})", pl.get_level(defense), pl.get_xp(defense), pl.needed_xp(defense));
     println!("Hitpoints: {} ({} / {})", pl.get_level(hitpoints), pl.get_xp(hitpoints), pl.needed_xp(hitpoints));
-    println!("============\n");
+    println!("========================\n");
 }
 
 pub fn combat_menu() {
@@ -204,12 +217,17 @@ pub fn combat_menu() {
 
     let mut i = 1;
     for monster in &monsters {
-        println!(
-            "  {}. {} (level: {})",
+        print!(
+            "  {}. {} (level: {}",
             i,
             monster.get_name(),
             ((monster.get_melee() + monster.get_ranged() + monster.get_magic()) / 3) as u32
         );
+        if monster.get_reqs().len() > 0 {
+            println!(", req. {})", monster.get_reqs());
+        } else {
+            println!(")"); 
+        }
         i += 1;
     }
 
@@ -232,4 +250,19 @@ pub fn combat_menu() {
     let monster: &Box<dyn MonsterData> = &monsters[(input - 1) as usize];
 
     fight(monster);
+}
+
+fn _max_hit_comp(attack: u32, defense: u32) -> u32 {
+    let max_hit = (10.0 * (attack as f64 + 1.0).log2().powf(2.0) / (defense as f64 + 1.0).log(4.0)) as u32;
+    max_hit
+}
+
+impl Material {
+    pub fn get_melee_bonus(&self) -> u32 {
+        match self {
+            Material::WoodenAxe => 1,
+            Material::BronzeAxe => 3,
+            _ => 0,
+        }
+    }
 }

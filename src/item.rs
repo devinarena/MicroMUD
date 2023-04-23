@@ -66,16 +66,8 @@ impl Material {
 
     pub fn get_required_level_equip(&self) -> (&str, u32) {
         match self {
-            Material::BronzeAxe => ("woodcutting", 10),
+            Material::BronzeAxe => ("woodcutting", 100),
             _ => ("melee", 1),
-        }
-    }
-
-    pub fn get_axe_bonus(&self) -> u32 {
-        match self {
-            Material::WoodenAxe => 1,
-            Material::BronzeAxe => 2,
-            _ => 0,
         }
     }
 
