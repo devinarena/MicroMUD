@@ -35,6 +35,7 @@ fn fight(monster: &Box<dyn MonsterData>) {
         + pl.get_level(&"magic".to_string())
         + pl.get_level(&"defense".to_string())) as f32
         / 4.0;
+    let pl_crit_chance = 0.15;
 
     let elevel =
         ((monster.get_melee() + monster.get_magic() + monster.get_ranged() + monster.get_defense())
@@ -46,6 +47,7 @@ fn fight(monster: &Box<dyn MonsterData>) {
         "magic" => monster.get_magic(),
         _ => 0,
     };
+    let ecrit_chance = 0.1;
 
     *ACTION.lock().unwrap() = Action::COMBAT;
 
@@ -100,24 +102,41 @@ fn fight(monster: &Box<dyn MonsterData>) {
                 let attack_bonus = pl_attack + mh_bonus;
                 let max_hit = _max_hit_comp(attack_bonus, monster.get_defense());
                 let damage = (max_hit as f32 * random::<f32>()) as i32;
-                ehealth -= damage;
-                println!(
-                    "You hit the {} for {} melee damage.",
-                    monster.get_name(),
-                    damage
-                );
+                if random::<f32>() < pl_crit_chance {
+                    ehealth -= damage * 2;
+                    println!(
+                        "You critically hit the {} for {} melee damage.",
+                        monster.get_name(),
+                        damage
+                    );
+                } else {
+                    ehealth -= damage;
+                    println!(
+                        "You hit the {} for {} melee damage.",
+                        monster.get_name(),
+                        damage
+                    );
+                }
 
                 thread::sleep(Duration::from_secs(1));
 
                 let e_max_hit = _max_hit_comp(eattack, pl_defense);
                 let edmg = (e_max_hit as f32 * random::<f32>()) as i32;
-                health -= edmg;
-                println!(
-                    "The {} hits you for {} {} damage.",
-                    monster.get_name(),
-                    edmg,
-                    monster.get_attack_style(),
-                );
+                if random::<f32>() < ecrit_chance {
+                    health -= edmg * 2;
+                    println!(
+                        "The {} critically hit you for {} melee damage.",
+                        monster.get_name(),
+                        edmg
+                    );
+                } else {
+                    health -= edmg;
+                    println!(
+                        "The {} hit you for {} melee damage.",
+                        monster.get_name(),
+                        edmg
+                    );
+                }
 
                 thread::sleep(Duration::from_secs(2));
             }
@@ -143,8 +162,8 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         thread::sleep(Duration::from_secs(1));
 
-        let xp = (elevel as u64 + monster.get_hitpoints() as u64) * 25;
-        let hp_xp = monster.get_hitpoints() as u64 * 50;
+        let xp = (elevel as u64 + monster.get_hitpoints() as u64) * 20;
+        let hp_xp = monster.get_hitpoints() as u64 * 40;
         let defense_xp = (pl.get_level(&"hitpoints".to_string()) as u64 * 100 - health as u64) / 2;
         pl.add_xp(&"melee".to_string(), xp);
         pl.add_xp(&"hitpoints".to_string(), hp_xp);
@@ -164,8 +183,16 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         for (material, min, max, chance) in monster.get_drops() {
             if random::<f32>() < chance {
-                let quantity = random::<u32>() % (max - min) + min;
-                println!("{} dropped {} x {}!", monster.get_name(), quantity, material);
+                let quantity = match max - min {
+                    0 => max,
+                    _ => random::<u32>() % (max - min) + min,
+                };
+                println!(
+                    "{} dropped {} x {}!",
+                    monster.get_name(),
+                    quantity,
+                    material
+                );
                 pl.get_inventory_mut()
                     .add_item(Item::new(material, quantity as i32));
             }
@@ -195,11 +222,36 @@ fn print_combat_stats() {
 
     println!("Combat Stats (Total LVL: {})", total_lvl);
     println!("========================");
-    println!("Melee: {} ({} / {})", pl.get_level(melee), pl.get_xp(melee), pl.needed_xp(melee));
-    println!("Ranged: {} ({} / {})", pl.get_level(ranged), pl.get_xp(ranged), pl.needed_xp(ranged));
-    println!("Magic: {} ({} / {})", pl.get_level(magic), pl.get_xp(magic), pl.needed_xp(magic));
-    println!("Defense: {} ({} / {})", pl.get_level(defense), pl.get_xp(defense), pl.needed_xp(defense));
-    println!("Hitpoints: {} ({} / {})", pl.get_level(hitpoints), pl.get_xp(hitpoints), pl.needed_xp(hitpoints));
+    println!(
+        "Melee: {} ({} / {})",
+        pl.get_level(melee),
+        pl.get_xp(melee),
+        pl.needed_xp(melee)
+    );
+    println!(
+        "Ranged: {} ({} / {})",
+        pl.get_level(ranged),
+        pl.get_xp(ranged),
+        pl.needed_xp(ranged)
+    );
+    println!(
+        "Magic: {} ({} / {})",
+        pl.get_level(magic),
+        pl.get_xp(magic),
+        pl.needed_xp(magic)
+    );
+    println!(
+        "Defense: {} ({} / {})",
+        pl.get_level(defense),
+        pl.get_xp(defense),
+        pl.needed_xp(defense)
+    );
+    println!(
+        "Hitpoints: {} ({} / {})",
+        pl.get_level(hitpoints),
+        pl.get_xp(hitpoints),
+        pl.needed_xp(hitpoints)
+    );
     println!("========================\n");
 }
 
@@ -226,7 +278,7 @@ pub fn combat_menu() {
         if monster.get_reqs().len() > 0 {
             println!(", req. {})", monster.get_reqs());
         } else {
-            println!(")"); 
+            println!(")");
         }
         i += 1;
     }
@@ -253,7 +305,7 @@ pub fn combat_menu() {
 }
 
 fn _max_hit_comp(attack: u32, defense: u32) -> u32 {
-    let max_hit = (10.0 * (attack as f64 + 1.0).log2().powf(2.0) / (defense as f64 + 1.0).log(4.0)) as u32;
+    let max_hit = (30.0 * 1.05_f64.powi(attack as i32) / 1.025_f64.powi(defense as i32)) as u32;
     max_hit
 }
 
@@ -261,6 +313,8 @@ impl Material {
     pub fn get_melee_bonus(&self) -> u32 {
         match self {
             Material::WoodenAxe => 1,
+            Material::WoodenDagger => 1,
+            Material::WoodenSword => 2,
             Material::BronzeAxe => 3,
             _ => 0,
         }

@@ -47,6 +47,7 @@ impl MonsterData for Rat {
     fn get_drops(&self) -> Vec<(Material, u32, u32, f32)> {
         vec![
             (Material::Log, 1, 1, 0.25),
+            (Material::WoodenDagger, 1, 1, 0.25),
             (Material::LeatherGloves, 1, 1, 0.1),
         ]
     }
@@ -59,7 +60,7 @@ impl MonsterData for Rat {
         "".to_string()
     }
 
-    fn can_fight(&self, player: &Player) -> String {
+    fn can_fight(&self, _player: &Player) -> String {
         "".to_string()
     }
 }

@@ -8,6 +8,7 @@ pub enum MaterialType {
     Log,
     Food,
     Axe,
+    Weapon,
     Gloves,
 }
 
@@ -18,6 +19,8 @@ pub enum Material {
     BirchLog,
     Apple,
     WoodenAxe,
+    WoodenDagger,
+    WoodenSword,
     BronzeAxe,
     LeatherGloves,
     // IronAxe,
@@ -35,6 +38,8 @@ impl Material {
             Material::BirchLog => "Birch Logs".to_string(),
             Material::Apple => "Apple".to_string(),
             Material::WoodenAxe => "Wooden Axe".to_string(),
+            Material::WoodenDagger => "Wooden Dagger".to_string(),
+            Material::WoodenSword => "Wooden Sword".to_string(),
             Material::BronzeAxe => "Bronze Axe".to_string(),
             Material::LeatherGloves => "Leather Gloves".to_string(),
         }
@@ -47,6 +52,8 @@ impl Material {
             Material::BirchLog => MaterialType::Log,
             Material::Apple => MaterialType::Food,
             Material::WoodenAxe => MaterialType::Axe,
+            Material::WoodenDagger => MaterialType::Weapon,
+            Material::WoodenSword => MaterialType::Weapon,
             Material::BronzeAxe => MaterialType::Axe,
             Material::LeatherGloves => MaterialType::Gloves,
         }
@@ -59,6 +66,8 @@ impl Material {
             Material::BirchLog => 22,
             Material::Apple => 25,
             Material::WoodenAxe => 50,
+            Material::WoodenDagger => 50,
+            Material::WoodenSword => 75,
             Material::BronzeAxe => 250,
             Material::LeatherGloves => 100,
         }
@@ -95,6 +104,12 @@ impl Material {
             Material::WoodenAxe => {
                 println!("Wooden axe is a basic tool used to gather logs from trees.")
             }
+            Material::WoodenDagger => {
+                println!("Wooden dagger is a basic wooden weapon used to fight monsters.")
+            }
+            Material::WoodenSword => {
+                println!("Wooden sword is a better wooden weapon used to fight monsters.")
+            }
             Material::BronzeAxe => {
                 println!("Bronze axe is a slightly better tool used to gather logs from trees.")
             }
@@ -124,6 +139,8 @@ impl FromStr for Material {
             "BirchLog" => Ok(Material::BirchLog),
             "Apple" => Ok(Material::Apple),
             "WoodenAxe" => Ok(Material::WoodenAxe),
+            "WoodenDagger" => Ok(Material::WoodenDagger),
+            "WoodenSword" => Ok(Material::WoodenSword),
             "BronzeAxe" => Ok(Material::BronzeAxe),
             "LeatherGloves" => Ok(Material::LeatherGloves),
             _ => Err(()),
