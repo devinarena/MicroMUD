@@ -1,6 +1,7 @@
 use crate::{item::{Item, Material}, player::Player};
 
 pub mod rat;
+pub mod giant_rat;
 pub mod tree_spirit;
 pub trait MonsterData {
     fn get_name(&self) -> String;

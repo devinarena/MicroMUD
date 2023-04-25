@@ -46,7 +46,8 @@ impl MonsterData for TreeSpirit {
 
     fn get_drops(&self) -> Vec<(Material, u32, u32, f32)> {
         vec![
-            (Material::Log, 2, 4, 1.0),
+            (Material::TreeSpiritRemains, 1, 1, 1.0),
+            (Material::Log, 2, 4, 0.5),
             (Material::OakLog, 1, 1, 0.25),
             (Material::BirchLog, 1, 1, 0.2),
             (Material::BronzeAxe, 1, 1, 0.1),

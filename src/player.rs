@@ -107,6 +107,7 @@ impl Player {
         }
 
         if let Some(i) = old {
+            println!("Adding {} to inventory.", i.get_material().get_name());
             self.inventory.add_item(i);
         }
 
@@ -319,6 +320,16 @@ impl Player {
             defense_bonus += item.get_material().get_defense_bonus();
         }
         return defense_bonus;
+    }
+
+    pub fn get_combat_level(&self) -> u64 {
+        let mut combat_level: u64 = 0;
+        combat_level += self.get_level(&"melee".to_string());
+        combat_level += self.get_level(&"defense".to_string());
+        combat_level += self.get_level(&"ranged".to_string());
+        combat_level += self.get_level(&"magic".to_string());
+        combat_level += self.get_level(&"hitpoints".to_string());
+        return combat_level / 5;
     }
 
     pub fn print_stats(&self) {

@@ -36,6 +36,42 @@ impl Inventory {
     }
 
     pub fn add_item(&mut self, item: Item) {
+        if let Some(equipped) = &mut self.main_hand {
+            if equipped.get_material() == item.get_material() {
+                equipped.add_quantity(item.get_quantity());
+                return;
+            }
+        }
+        if let Some(equipped) = &mut self.off_hand {
+            if equipped.get_material() == item.get_material() {
+                equipped.add_quantity(item.get_quantity());
+                return;
+            }
+        }
+        if let Some(equipped) = &mut self.helmet {
+            if equipped.get_material() == item.get_material() {
+                equipped.add_quantity(item.get_quantity());
+                return;
+            }
+        }
+        if let Some(equipped) = &mut self.chestplate {
+            if equipped.get_material() == item.get_material() {
+                equipped.add_quantity(item.get_quantity());
+                return;
+            }
+        }
+        if let Some(equipped) = &mut self.leggings {
+            if equipped.get_material() == item.get_material() {
+                equipped.add_quantity(item.get_quantity());
+                return;
+            }
+        }
+        if let Some(equipped) = &mut self.boots {
+            if equipped.get_material() == item.get_material() {
+                equipped.add_quantity(item.get_quantity());
+                return;
+            }
+        }
         for i in 0..self.items.len() {
             if self.items[i].get_material() == item.get_material() {
                 self.items[i].add_quantity(item.get_quantity());

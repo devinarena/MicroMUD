@@ -12,6 +12,8 @@ impl LogData for Material {
             Material::Log => 20,
             Material::OakLog => 35,
             Material::BirchLog => 45,
+
+            Material::TreeSpiritRemains => 50,
             _ => 0,
         }
     }
@@ -21,6 +23,8 @@ impl LogData for Material {
             Material::Log => 2500,
             Material::OakLog => 2700,
             Material::BirchLog => 2700,
+
+            Material::TreeSpiritRemains => 3200,
             _ => 0,
         }
     }
@@ -30,6 +34,8 @@ impl LogData for Material {
             Material::Log => 1,
             Material::OakLog => 15,
             Material::BirchLog => 25,
+
+            Material::TreeSpiritRemains => 5,
             _ => 0,
         }
     }
