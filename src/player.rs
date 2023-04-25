@@ -75,7 +75,7 @@ impl Player {
         }
     }
 
-    pub fn equip(&mut self, index: usize) -> String {
+    pub fn equip(&mut self, index: usize, slot: &str) -> String {
         let item = self.inventory.get_item(index).clone();
 
         let mat = item.get_material();
@@ -86,9 +86,25 @@ impl Player {
 
         self.inventory.remove_item(index);
 
-        let old = self.inventory.main_hand.take();
+        let old = match slot {
+            "helmet" => self.inventory.get_helmet().clone(),
+            "chestplate" => self.inventory.get_chestplate().clone(),
+            "leggings" => self.inventory.get_leggings().clone(),
+            "boots" => self.inventory.get_boots().clone(),
+            "main_hand" => self.inventory.get_main_hand().clone(),
+            "off_hand" => self.inventory.get_off_hand().clone(),
+            _ => return format!("{} is not a valid slot.", slot),
+        };
 
-        self.inventory.set_main_hand(item);
+        match slot {
+            "helmet" => self.inventory.set_helmet(Some(item)),
+            "chestplate" => self.inventory.set_chestplate(Some(item)),
+            "leggings" => self.inventory.set_leggings(Some(item)),
+            "boots" => self.inventory.set_boots(Some(item)),
+            "main_hand" => self.inventory.set_main_hand(Some(item)),
+            "off_hand" => self.inventory.set_off_hand(Some(item)),
+            _ => return format!("{} is not a valid slot.", slot),
+        }
 
         if let Some(i) = old {
             self.inventory.add_item(i);
@@ -99,7 +115,6 @@ impl Player {
 
     pub fn deserialize(json: &Value) -> Player {
         let name = json["name"].as_str().unwrap().to_string();
-        let class = json["class"].as_str().unwrap().to_string();
         let mut player = Player {
             name,
             xp: HashMap::new(),
@@ -205,10 +220,10 @@ impl Player {
         self.xp[skill]
     }
 
-    pub fn get_level(&self, skill: &String) -> u32 {
+    pub fn get_level(&self, skill: &String) -> u64 {
         let mut xp = self.xp[skill] as f64;
 
-        let mut level: u32 = 1;
+        let mut level: u64 = 1;
 
         while xp >= 0.0 {
             let needed_xp = self._needed_xp_l(level);
@@ -235,7 +250,7 @@ impl Player {
         return next_xp;
     }
 
-    fn _needed_xp_l(&self, level: u32) -> u64 {
+    fn _needed_xp_l(&self, level: u64) -> u64 {
         let needed_xp = (150.0 * 1.75_f64.powf((level - 1) as f64 / 8.0) / 4.7) as u64;
         return needed_xp;
     }
@@ -258,6 +273,52 @@ impl Player {
 
     pub fn add_gold(&mut self, gold: u64) {
         self.gold += gold;
+    }
+
+    pub fn get_attack_bonus(&self) -> u64 {
+        let mut attack_bonus: u64 = self.get_level(&"melee".to_string());
+        if let Some(item) = self.inventory.get_main_hand() {
+            attack_bonus += item.get_material().get_melee_bonus();
+        }
+        if let Some(item) = self.inventory.get_off_hand() {
+            attack_bonus += item.get_material().get_attack_bonus();
+        }
+        if let Some(item) = self.inventory.get_helmet() {
+            attack_bonus += item.get_material().get_attack_bonus();
+        }
+        if let Some(item) = self.inventory.get_chestplate() {
+            attack_bonus += item.get_material().get_attack_bonus();
+        }
+        if let Some(item) = self.inventory.get_leggings() {
+            attack_bonus += item.get_material().get_attack_bonus();
+        }
+        if let Some(item) = self.inventory.get_boots() {
+            attack_bonus += item.get_material().get_attack_bonus();
+        }
+        return attack_bonus;
+    }
+
+    pub fn get_defense_bonus(&self) -> u64 {
+        let mut defense_bonus: u64 = self.get_level(&"defense".to_string());
+        if let Some(item) = self.inventory.get_main_hand() {
+            defense_bonus += item.get_material().get_defense_bonus();
+        }
+        if let Some(item) = self.inventory.get_off_hand() {
+            defense_bonus += item.get_material().get_defense_bonus();
+        }
+        if let Some(item) = self.inventory.get_helmet() {
+            defense_bonus += item.get_material().get_defense_bonus();
+        }
+        if let Some(item) = self.inventory.get_chestplate() {
+            defense_bonus += item.get_material().get_defense_bonus();
+        }
+        if let Some(item) = self.inventory.get_leggings() {
+            defense_bonus += item.get_material().get_defense_bonus();
+        }
+        if let Some(item) = self.inventory.get_boots() {
+            defense_bonus += item.get_material().get_defense_bonus();
+        }
+        return defense_bonus;
     }
 
     pub fn print_stats(&self) {

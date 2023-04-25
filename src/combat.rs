@@ -62,16 +62,6 @@ fn fight(monster: &Box<dyn MonsterData>) {
         );
         println!("========================================\n");
 
-        let pl_attack = pl.get_level(&"melee".to_string());
-        let pl_defense = pl.get_level(&"defense".to_string());
-
-        let mut mh_bonus: u32 = 0;
-        let mh = pl.get_inventory().get_main_hand().clone();
-        if mh.is_some() {
-            let mh_mat = mh.as_ref().unwrap().get_material();
-            mh_bonus = mh_mat.get_melee_bonus();
-        }
-
         println!("> {}: {} / {}\n", monster.get_name(), ehealth, emax_health);
 
         println!(
@@ -99,15 +89,14 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         match input {
             1 => {
-                let attack_bonus = pl_attack + mh_bonus;
-                let max_hit = _max_hit_comp(attack_bonus, monster.get_defense());
+                let max_hit = _max_hit_comp(pl.get_attack_bonus(), monster.get_defense());
                 let damage = (max_hit as f32 * random::<f32>()) as i32;
                 if random::<f32>() < pl_crit_chance {
                     ehealth -= damage * 2;
                     println!(
                         "You critically hit the {} for {} melee damage.",
                         monster.get_name(),
-                        damage
+                        damage * 2
                     );
                 } else {
                     ehealth -= damage;
@@ -120,22 +109,23 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
                 thread::sleep(Duration::from_secs(1));
 
-                let defense_bonus = pl_defense;
-                let e_max_hit = _max_hit_comp(eattack, defense_bonus);
+                let e_max_hit = _max_hit_comp(eattack, pl.get_defense_bonus());
                 let edmg = (e_max_hit as f32 * random::<f32>()) as i32;
                 if random::<f32>() < ecrit_chance {
                     health -= edmg * 2;
                     println!(
-                        "The {} critically hit you for {} melee damage.",
+                        "The {} critically hit you for {} {} damage.",
                         monster.get_name(),
-                        edmg
+                        edmg * 2,
+                        monster.get_attack_style(),
                     );
                 } else {
                     health -= edmg;
                     println!(
-                        "The {} hit you for {} melee damage.",
+                        "The {} hit you for {} {} damage.",
                         monster.get_name(),
-                        edmg
+                        edmg,
+                        monster.get_attack_style(),
                     );
                 }
 
@@ -163,7 +153,7 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         thread::sleep(Duration::from_secs(1));
 
-        let xp = (elevel as u64 + monster.get_hitpoints() as u64) * 20;
+        let xp = (elevel as u64) * 40;
         let hp_xp = monster.get_hitpoints() as u64 * 40;
         let defense_xp = (pl.get_level(&"hitpoints".to_string()) as u64 * 100 - health as u64) / 2;
         pl.add_xp(&"melee".to_string(), xp);
@@ -257,67 +247,59 @@ fn print_combat_stats() {
 }
 
 pub fn combat_menu() {
-    clear_screen();
-
-    print_combat_stats();
-
-    println!("Combat Menu");
-    println!("What would you like to fight?");
+    let mut input = 0;
 
     let mut monsters: Vec<Box<dyn MonsterData>> = Vec::new();
     monsters.push(Box::new(Rat::new()));
     monsters.push(Box::new(TreeSpirit::new()));
 
-    let mut i = 1;
-    for monster in &monsters {
-        print!(
-            "  {}. {} (level: {}",
-            i,
-            monster.get_name(),
-            ((monster.get_melee() + monster.get_ranged() + monster.get_magic()) / 3) as u32
-        );
-        if monster.get_reqs().len() > 0 {
-            println!(", req. {})", monster.get_reqs());
-        } else {
-            println!(")");
+    while input as usize != monsters.len() + 1 {
+        clear_screen();
+
+        print_combat_stats();
+
+        println!("Combat Menu");
+        println!("What would you like to fight?");
+
+        let mut i = 1;
+        for monster in &monsters {
+            print!(
+                "  {}. {} (level: {}",
+                i,
+                monster.get_name(),
+                ((monster.get_melee() + monster.get_ranged() + monster.get_magic()) / 3) as u32
+            );
+            if monster.get_reqs().len() > 0 {
+                println!(", req. {})", monster.get_reqs());
+            } else {
+                println!(")");
+            }
+            i += 1;
         }
-        i += 1;
-    }
 
-    println!("  {}. Main Menu", i);
+        println!("  {}. Main Menu", i);
 
-    print!("> ");
-
-    let mut input: u32 = read!();
-
-    while input < 1 || input > i {
-        println!("Invalid input. Please enter a number between 1 and {}.", i);
         print!("> ");
+
         input = read!();
-    }
 
-    if input == i {
-        return;
-    }
-
-    let monster: &Box<dyn MonsterData> = &monsters[(input - 1) as usize];
-
-    fight(monster);
-}
-
-fn _max_hit_comp(attack: u32, defense: u32) -> u32 {
-    let max_hit = (30.0 * 1.05_f64.powi(attack as i32) / 1.025_f64.powi(defense as i32)) as u32;
-    max_hit
-}
-
-impl Material {
-    pub fn get_melee_bonus(&self) -> u32 {
-        match self {
-            Material::WoodenAxe => 1,
-            Material::WoodenDagger => 1,
-            Material::WoodenSword => 2,
-            Material::BronzeAxe => 3,
-            _ => 0,
+        while input < 1 || input > i {
+            println!("Invalid input. Please enter a number between 1 and {}.", i);
+            print!("> ");
+            input = read!();
         }
+
+        if input == i {
+            continue;
+        }
+
+        let monster: &Box<dyn MonsterData> = &monsters[(input - 1) as usize];
+
+        fight(monster);
     }
+}
+
+fn _max_hit_comp(attack: u64, defense: u64) -> u32 {
+    let max_hit = (25.0 * 1.25_f64.powi(attack as i32 / 4) / 1.1_f64.powi(defense as i32 / 4)) as u32;
+    max_hit
 }

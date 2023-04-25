@@ -5,7 +5,7 @@ pub trait TreeData {
     fn get_xp(&self) -> u64;
     fn get_result(&self) -> Item;
     fn get_success_rate(&self) -> u32;
-    fn get_required_level(&self) -> u32;
+    fn get_required_level(&self) -> u64;
     fn get_apple_chance(&self) -> u32 {
         0
     }
@@ -36,7 +36,7 @@ impl TreeData for NormalTree {
         20
     }
 
-    fn get_required_level(&self) -> u32 {
+    fn get_required_level(&self) -> u64 {
         1
     }
 }
@@ -66,7 +66,7 @@ impl TreeData for OakTree {
         15
     }
 
-    fn get_required_level(&self) -> u32 {
+    fn get_required_level(&self) -> u64 {
         15
     }
 
@@ -102,7 +102,7 @@ impl TreeData for BirchTree {
         14
     }
 
-    fn get_required_level(&self) -> u32 {
+    fn get_required_level(&self) -> u64 {
         25
     }
 

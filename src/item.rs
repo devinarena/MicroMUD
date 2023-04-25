@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 pub mod armor;
+pub mod weapon;
 
 #[derive(PartialEq)]
 pub enum MaterialType {
@@ -79,7 +80,7 @@ impl Material {
         }
     }
 
-    pub fn get_required_level_equip(&self) -> (&str, u32) {
+    pub fn get_required_level_equip(&self) -> (&str, u64) {
         match self {
             Material::BronzeAxe => ("woodcutting", 100),
             _ => ("melee", 1),
@@ -150,6 +151,7 @@ impl FromStr for Material {
             "WoodenAxe" => Ok(Material::WoodenAxe),
             "WoodenDagger" => Ok(Material::WoodenDagger),
             "WoodenSword" => Ok(Material::WoodenSword),
+            "WoodenShield" => Ok(Material::WoodenShield),
             "BronzeAxe" => Ok(Material::BronzeAxe),
             "LeatherGloves" => Ok(Material::LeatherGloves),
             _ => Err(()),

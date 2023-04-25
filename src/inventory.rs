@@ -170,26 +170,128 @@ impl Inventory {
         &mut self.main_hand
     }
 
-    pub fn set_main_hand(&mut self, item: Item) {
-        self.main_hand = Some(item);
+    pub fn set_main_hand(&mut self, item: Option<Item>) {
+        self.main_hand = item;
+    }
+
+    pub fn get_off_hand(&self) -> &Option<Item> {
+        &self.off_hand
+    }
+
+    pub fn get_off_hand_mut(&mut self) -> &mut Option<Item> {
+        &mut self.off_hand
+    }
+
+    pub fn set_off_hand(&mut self, item: Option<Item>) {
+        self.off_hand = item;
+    }
+
+    pub fn get_helmet(&self) -> &Option<Item> {
+        &self.helmet
+    }
+
+    pub fn get_helmet_mut(&mut self) -> &mut Option<Item> {
+        &mut self.helmet
+    }
+
+    pub fn set_helmet(&mut self, item: Option<Item>) {
+        self.helmet = item;
+    }
+
+    pub fn get_chestplate(&self) -> &Option<Item> {
+        &self.chestplate
+    }
+
+    pub fn get_chestplate_mut(&mut self) -> &mut Option<Item> {
+        &mut self.chestplate
+    }
+
+    pub fn set_chestplate(&mut self, item: Option<Item>) {
+        self.chestplate = item;
+    }
+
+    pub fn get_leggings(&self) -> &Option<Item> {
+        &self.leggings
+    }
+
+    pub fn get_leggings_mut(&mut self) -> &mut Option<Item> {
+        &mut self.leggings
+    }
+
+    pub fn set_leggings(&mut self, item: Option<Item>) {
+        self.leggings = item;
+    }
+
+    pub fn get_boots(&self) -> &Option<Item> {
+        &self.boots
+    }
+
+    pub fn get_boots_mut(&mut self) -> &mut Option<Item> {
+        &mut self.boots
+    }
+
+    pub fn set_boots(&mut self, item: Option<Item>) {
+        self.boots = item;
     }
 }
 
 pub fn print_inventory() {
-    println!("Gold: {}g", PLAYER.lock().unwrap().get_gold());
+    let player = PLAYER.lock().unwrap();
+    println!("Gold: {}g", player.get_gold());
     println!("\nEquipment:");
-    if let Some(item) = &PLAYER.lock().unwrap().get_inventory().get_main_hand() {
+    if let Some(item) = &player.get_inventory().get_main_hand() {
         println!(
-            "Main Hand: {} x {}",
+            "  Main Hand: {} x {}",
             item.get_material(),
             item.get_quantity()
         );
     } else {
-        println!("Main Hand: None");
+        println!("  Main Hand: None");
     }
+    if let Some(item) = &player.get_inventory().get_off_hand() {
+        println!(
+            "  Off Hand: {} x {}",
+            item.get_material(),
+            item.get_quantity()
+        );
+    } else {
+        println!("  Off Hand: None");
+    }
+    if let Some(item) = &player.get_inventory().get_helmet() {
+        println!("  Helmet: {} x {}", item.get_material(), item.get_quantity());
+    } else {
+        println!("  Helmet: None");
+    }
+    if let Some(item) = &player.get_inventory().get_chestplate() {
+        println!(
+            "  Chestplate: {} x {}",
+            item.get_material(),
+            item.get_quantity()
+        );
+    } else {
+        println!("  Chestplate: None");
+    }
+    if let Some(item) = &player.get_inventory().get_leggings() {
+        println!(
+            "  Leggings: {} x {}",
+            item.get_material(),
+            item.get_quantity()
+        );
+    } else {
+        println!("  Leggings: None");
+    }
+    if let Some(item) = &player.get_inventory().get_boots() {
+        println!("  Boots: {} x {}", item.get_material(), item.get_quantity());
+    } else {
+        println!("  Boots: None");
+    }
+
+    println!("\nAttack Bonus: {}", player.get_attack_bonus() - player.get_level(&"melee".to_string()));
+    println!("Defense Bonus: {}", player.get_defense_bonus() - player.get_level(&"defense".to_string()));
+
     println!("\nInventory:");
     let mut index = 0;
-    for item in PLAYER.lock().unwrap().get_inventory().get_items() {
+    for item in player.get_inventory().get_items() {
         println!(
             "{}. {} x {}",
             index + 1,
@@ -229,6 +331,21 @@ pub fn view_inventory() {
                 println!("drop(d) [index] <amount> - drops an item from your inventory");
                 println!(
                     "main_hand(mh) <index> - equips an item to your main hand, type no index to unequip"
+                );
+                println!(
+                    "off_hand(oh) <index> - equips an item to your off hand, type no index to unequip"
+                );
+                println!(
+                    "helmet(hm) <index> - equips an item to your helmet, type no index to unequip"
+                );
+                println!(
+                    "chestplate(cp) <index> - equips an item to your chestplate, type no index to unequip"
+                );
+                println!(
+                    "leggings(lg) <index> - equips an item to your leggings, type no index to unequip"
+                );
+                println!(
+                    "boots(bt) <index> - equips an item to your boots, type no index to unequip"
                 );
                 println!("info(i) [index] - displays information about an item");
                 println!("value(v) <index> - displays the value of an item, omit <item> to see total inventory value");
@@ -287,7 +404,7 @@ pub fn view_inventory() {
 
                 let mut player = PLAYER.lock().unwrap();
 
-                let res = player.equip(index - 1);
+                let res = player.equip(index - 1, "main_hand");
 
                 if res == "" {
                     println!(
@@ -308,7 +425,219 @@ pub fn view_inventory() {
                 }
             }
             "off_hand" | "oh" => {
-                
+                if tokens.len() == 1 {
+                    let item = PLAYER
+                        .lock()
+                        .unwrap()
+                        .get_inventory_mut()
+                        .get_off_hand_mut()
+                        .take();
+                    let mat = item.as_ref().unwrap().get_material();
+                    if let Some(item) = item {
+                        PLAYER.lock().unwrap().get_inventory_mut().add_item(item);
+                    }
+                    println!("Unequipped {} from off hand.", mat);
+                    thread::sleep(Duration::from_secs(1));
+                    clear_screen();
+                    print_inventory();
+                    continue;
+                }
+
+                let index = tokens[1].parse::<usize>().unwrap();
+
+                let mut player = PLAYER.lock().unwrap();
+
+                let res = player.equip(index - 1, "off_hand");
+
+                if res == "" {
+                    println!(
+                        "Equipped {} in off hand",
+                        player
+                            .get_inventory()
+                            .get_off_hand()
+                            .as_ref()
+                            .unwrap()
+                            .get_material()
+                    );
+                    drop(player);
+                    thread::sleep(Duration::from_secs(1));
+                    clear_screen();
+                    print_inventory();
+                } else {
+                    println!("{}", res);
+                }   
+            }
+            "helmet" | "hm" => {
+                if tokens.len() == 1 {
+                    let item = PLAYER
+                        .lock()
+                        .unwrap()
+                        .get_inventory_mut()
+                        .get_helmet_mut()
+                        .take();
+                    let mat = item.as_ref().unwrap().get_material();
+                    if let Some(item) = item {
+                        PLAYER.lock().unwrap().get_inventory_mut().add_item(item);
+                    }
+                    println!("Unequipped {} from helm.", mat);
+                    thread::sleep(Duration::from_secs(1));
+                    clear_screen();
+                    print_inventory();
+                    continue;
+                }
+
+                let index = tokens[1].parse::<usize>().unwrap();
+
+                let mut player = PLAYER.lock().unwrap();
+
+                let res = player.equip(index - 1, "helmet");
+
+                if res == "" {
+                    println!(
+                        "Equipped {} in helm",
+                        player
+                            .get_inventory()
+                            .get_helmet()
+                            .as_ref()
+                            .unwrap()
+                            .get_material()
+                    );
+                    drop(player);
+                    thread::sleep(Duration::from_secs(1));
+                    clear_screen();
+                    print_inventory();
+                } else {
+                    println!("{}", res);
+                }
+            }
+            "chestplate" | "cp" => {
+                if tokens.len() == 1 {
+                    let item = PLAYER
+                        .lock()
+                        .unwrap()
+                        .get_inventory_mut()
+                        .get_chestplate_mut()
+                        .take();
+                    let mat = item.as_ref().unwrap().get_material();
+                    if let Some(item) = item {
+                        PLAYER.lock().unwrap().get_inventory_mut().add_item(item);
+                    }
+                    println!("Unequipped {} from chestplate.", mat);
+                    thread::sleep(Duration::from_secs(1));
+                    clear_screen();
+                    print_inventory();
+                    continue;
+                }
+
+                let index = tokens[1].parse::<usize>().unwrap();
+
+                let mut player = PLAYER.lock().unwrap();
+
+                let res = player.equip(index - 1, "chestplate");
+
+                if res == "" {
+                    println!(
+                        "Equipped {} in chestplate",
+                        player
+                            .get_inventory()
+                            .get_chestplate()
+                            .as_ref()
+                            .unwrap()
+                            .get_material()
+                    );
+                    drop(player);
+                    thread::sleep(Duration::from_secs(1));
+                    clear_screen();
+                    print_inventory();
+                } else {
+                    println!("{}", res);
+                }
+            }
+            "leggings" | "lg" => {
+                if tokens.len() == 1 {
+                    let item = PLAYER
+                        .lock()
+                        .unwrap()
+                        .get_inventory_mut()
+                        .get_leggings_mut()
+                        .take();
+                    let mat = item.as_ref().unwrap().get_material();
+                    if let Some(item) = item {
+                        PLAYER.lock().unwrap().get_inventory_mut().add_item(item);
+                    }
+                    println!("Unequipped {} from leggings.", mat);
+                    thread::sleep(Duration::from_secs(1));
+                    clear_screen();
+                    print_inventory();
+                    continue;
+                }
+
+                let index = tokens[1].parse::<usize>().unwrap();
+
+                let mut player = PLAYER.lock().unwrap();
+
+                let res = player.equip(index - 1, "leggings");
+
+                if res == "" {
+                    println!(
+                        "Equipped {} in leggings",
+                        player
+                            .get_inventory()
+                            .get_leggings()
+                            .as_ref()
+                            .unwrap()
+                            .get_material()
+                    );
+                    drop(player);
+                    thread::sleep(Duration::from_secs(1));
+                    clear_screen();
+                    print_inventory();
+                } else {
+                    println!("{}", res);
+                }
+            }
+            "boots" | "bt" => {
+                if tokens.len() == 1 {
+                    let item = PLAYER
+                        .lock()
+                        .unwrap()
+                        .get_inventory_mut()
+                        .get_boots_mut()
+                        .take();
+                    let mat = item.as_ref().unwrap().get_material();
+                    if let Some(item) = item {
+                        PLAYER.lock().unwrap().get_inventory_mut().add_item(item);
+                    }
+                    println!("Unequipped {} from boots.", mat);
+                    thread::sleep(Duration::from_secs(1));
+                    clear_screen();
+                    print_inventory();
+                    continue;
+                }
+
+                let index = tokens[1].parse::<usize>().unwrap();
+
+                let mut player = PLAYER.lock().unwrap();
+
+                let res = player.equip(index - 1, "boots");
+
+                if res == "" {
+                    println!(
+                        "Equipped {} in boots",
+                        player
+                            .get_inventory()
+                            .get_boots()
+                            .as_ref()
+                            .unwrap()
+                            .get_material()
+                    );
+                    drop(player);
+                    thread::sleep(Duration::from_secs(1));
+                    clear_screen();
+                    print_inventory();
+                } else {
+                    println!("{}", res);
+                }
             }
             "info" | "i" => {
                 if tokens.len() != 2 {

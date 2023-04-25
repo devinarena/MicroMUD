@@ -3,7 +3,7 @@ use crate::item::Material;
 pub trait LogData {
     fn get_firemaking_xp(&self) -> u64;
     fn get_firemaking_time(&self) -> u32;
-    fn get_firemaking_level(&self) -> u32;
+    fn get_firemaking_level(&self) -> u64;
 }
 
 impl LogData for Material {
@@ -25,7 +25,7 @@ impl LogData for Material {
         }
     }
 
-    fn get_firemaking_level(&self) -> u32 {
+    fn get_firemaking_level(&self) -> u64 {
         match self {
             Material::Log => 1,
             Material::OakLog => 15,

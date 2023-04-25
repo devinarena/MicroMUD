@@ -1,7 +1,7 @@
 use rand::random;
 
 use crate::{
-    item::{Item, Material},
+    item::{Material},
     player::Player,
 };
 
@@ -24,23 +24,23 @@ impl MonsterData for Rat {
         "melee".to_string()
     }
 
-    fn get_melee(&self) -> u32 {
+    fn get_melee(&self) -> u64 {
         1
     }
 
-    fn get_ranged(&self) -> u32 {
+    fn get_ranged(&self) -> u64 {
         1
     }
 
-    fn get_magic(&self) -> u32 {
+    fn get_magic(&self) -> u64 {
         1
     }
 
-    fn get_hitpoints(&self) -> u32 {
+    fn get_hitpoints(&self) -> u64 {
         1
     }
 
-    fn get_defense(&self) -> u32 {
+    fn get_defense(&self) -> u64 {
         1
     }
 

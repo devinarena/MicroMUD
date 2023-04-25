@@ -24,23 +24,23 @@ impl MonsterData for TreeSpirit {
         "magic".to_string()
     }
 
-    fn get_melee(&self) -> u32 {
+    fn get_melee(&self) -> u64 {
         5
     }
 
-    fn get_ranged(&self) -> u32 {
+    fn get_ranged(&self) -> u64 {
         5
     }
 
-    fn get_magic(&self) -> u32 {
+    fn get_magic(&self) -> u64 {
         5
     }
 
-    fn get_hitpoints(&self) -> u32 {
+    fn get_hitpoints(&self) -> u64 {
         5
     }
 
-    fn get_defense(&self) -> u32 {
+    fn get_defense(&self) -> u64 {
         5
     }
 
@@ -54,7 +54,7 @@ impl MonsterData for TreeSpirit {
     }
 
     fn get_gold(&self) -> u64 {
-        random::<u64>() % 10
+        random::<u64>() % 50
     }
 
     fn get_reqs(&self) -> String {
