@@ -30,7 +30,6 @@ impl Display for Action {
 
 pub struct Player {
     name: String,
-    class: String,
     xp: HashMap<String, u64>,
     inventory: Inventory,
     gold: u64,
@@ -39,10 +38,9 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(name: String, class: String) -> Player {
+    pub fn new(name: String) -> Player {
         let mut player = Player {
             name,
-            class,
             xp: HashMap::new(),
             inventory: Inventory::new(),
             gold: 0,
@@ -63,15 +61,12 @@ impl Player {
         player.xp.insert("cooking".to_string(), 0);
         player.xp.insert("farming".to_string(), 0);
 
-        player.inventory.add_item(Item::new(Material::WoodenAxe, 1));
-
         return player;
     }
 
     pub fn empty() -> Player {
         Player {
             name: "".to_string(),
-            class: "".to_string(),
             xp: HashMap::new(),
             inventory: Inventory::new(),
             gold: 0,
@@ -107,7 +102,6 @@ impl Player {
         let class = json["class"].as_str().unwrap().to_string();
         let mut player = Player {
             name,
-            class,
             xp: HashMap::new(),
             inventory: Inventory::new(),
             gold: json["gold"].as_u64().unwrap(),
@@ -164,7 +158,6 @@ impl Player {
     pub fn serialize(&self) -> String {
         json!({
             "name": self.name,
-            "class": self.class,
             "xp": {
                 "hitpoints": self.xp["hitpoints"],
                 "melee": self.xp["melee"],
@@ -202,10 +195,6 @@ impl Player {
 
     pub fn get_name(&self) -> String {
         self.name.clone()
-    }
-
-    pub fn get_class(&self) -> String {
-        self.class.clone()
     }
 
     pub fn get_location(&self) -> String {
@@ -273,7 +262,6 @@ impl Player {
 
     pub fn print_stats(&self) {
         println!("Name: {}", self.name);
-        println!("  Class: {}", self.class);
         println!("  Location: {}", self.location);
         println!("  Health: {}", self.health);
         println!("  Gold: {}g", self.gold);

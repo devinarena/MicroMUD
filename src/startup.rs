@@ -3,7 +3,7 @@ use std::thread;
 use text_io::read;
 
 use crate::{
-    game::{game_loop, ACTION, LOADED, PLAYER},
+    game::{game_loop, ACTION, LOADED, PLAYER, give_starter_items},
     io_manager::{clear_screen, get_all_saves, read_player_save, write_player_save},
     player::{Action, Player},
 };
@@ -42,12 +42,11 @@ pub fn create_character_menu() {
         name = read!();
     }
 
-    println!("Classes:");
-    println!("Enter your class:");
-
-    *PLAYER.lock().unwrap() = Player::new(name, "Warrior".to_string());
+    *PLAYER.lock().unwrap() = Player::new(name);
     *LOADED.lock().unwrap() = true;
     write_player_save();
+
+    give_starter_items();
 }
 
 pub fn load_character_menu(saves: &Vec<String>) {

@@ -14,6 +14,11 @@ use crate::{
 
 pub struct Inventory {
     pub main_hand: Option<Item>,
+    pub off_hand: Option<Item>,
+    pub helmet: Option<Item>,
+    pub chestplate: Option<Item>,
+    pub leggings: Option<Item>,
+    pub boots: Option<Item>,
     pub items: Vec<Item>,
 }
 
@@ -21,6 +26,11 @@ impl Inventory {
     pub fn new() -> Inventory {
         Inventory {
             main_hand: None,
+            off_hand: None,
+            helmet: None,
+            chestplate: None,
+            leggings: None,
+            boots: None,
             items: Vec::new(),
         }
     }
@@ -44,7 +54,33 @@ impl Inventory {
         if let Some(item) = &self.main_hand {
             mh = item.serialize();
         }
-        json!({ "main_hand": mh, "items": output })
+        let mut oh = json!(null);
+        if let Some(item) = &self.off_hand {
+            oh = item.serialize();
+        }
+        let mut helm = json!(null);
+        if let Some(item) = &self.helmet {
+            helm = item.serialize();
+        }
+        let mut chest = json!(null);
+        if let Some(item) = &self.chestplate {
+            chest = item.serialize();
+        }
+        let mut legs = json!(null);
+        if let Some(item) = &self.leggings {
+            legs = item.serialize();
+        }
+        let mut boots = json!(null);
+        if let Some(item) = &self.boots {
+            boots = item.serialize();
+        }
+        json!({ "main_hand": mh, 
+                "off_hand": oh,
+                "helmet": helm,
+                "chestplate": chest,
+                "leggings": legs,
+                "boots": boots,
+                "items": output  })
     }
 
     pub fn deserialize(&mut self, data: &Value) {
@@ -55,6 +91,31 @@ impl Inventory {
             self.main_hand = None;
         } else {
             self.main_hand = Some(Item::deserialize(&data["main_hand"]));
+        }
+        if data["off_hand"].is_null() {
+            self.off_hand = None;
+        } else {
+            self.off_hand = Some(Item::deserialize(&data["off_hand"]));
+        }
+        if data["helmet"].is_null() {
+            self.helmet = None;
+        } else {
+            self.helmet = Some(Item::deserialize(&data["helmet"]));
+        }
+        if data["chestplate"].is_null() {
+            self.chestplate = None;
+        } else {
+            self.chestplate = Some(Item::deserialize(&data["chestplate"]));
+        }
+        if data["leggings"].is_null() {
+            self.leggings = None;
+        } else {
+            self.leggings = Some(Item::deserialize(&data["leggings"]));
+        }
+        if data["boots"].is_null() {
+            self.boots = None;
+        } else {
+            self.boots = Some(Item::deserialize(&data["boots"]));
         }
     }
 
@@ -245,6 +306,9 @@ pub fn view_inventory() {
                 } else {
                     println!("{}", res);
                 }
+            }
+            "off_hand" | "oh" => {
+                
             }
             "info" | "i" => {
                 if tokens.len() != 2 {

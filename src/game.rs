@@ -12,7 +12,7 @@ use crate::{
     inventory::view_inventory,
     io_manager::{clear_screen, write_player_save},
     player::{Action, Player},
-    skilling::skilling_menu, combat::combat_menu,
+    skilling::skilling_menu, combat::combat_menu, item::{Material, Item},
 };
 
 pub static TICK_RATE: u32 = 20;
@@ -78,4 +78,10 @@ pub fn game_loop() {
             _ => {}
         }
     }
+}
+
+pub fn give_starter_items() {
+    let mut pl = PLAYER.lock().unwrap();
+    pl.get_inventory_mut().add_item(Item::new(Material::WoodenDagger, 1));
+    pl.get_inventory_mut().add_item(Item::new(Material::WoodenShield, 1));
 }

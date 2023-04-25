@@ -3,6 +3,8 @@ use std::{fmt::Display, str::FromStr};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
+pub mod armor;
+
 #[derive(PartialEq)]
 pub enum MaterialType {
     Log,
@@ -21,6 +23,7 @@ pub enum Material {
     WoodenAxe,
     WoodenDagger,
     WoodenSword,
+    WoodenShield,
     BronzeAxe,
     LeatherGloves,
     // IronAxe,
@@ -40,6 +43,7 @@ impl Material {
             Material::WoodenAxe => "Wooden Axe".to_string(),
             Material::WoodenDagger => "Wooden Dagger".to_string(),
             Material::WoodenSword => "Wooden Sword".to_string(),
+            Material::WoodenShield => "Wooden Shield".to_string(),
             Material::BronzeAxe => "Bronze Axe".to_string(),
             Material::LeatherGloves => "Leather Gloves".to_string(),
         }
@@ -54,6 +58,7 @@ impl Material {
             Material::WoodenAxe => MaterialType::Axe,
             Material::WoodenDagger => MaterialType::Weapon,
             Material::WoodenSword => MaterialType::Weapon,
+            Material::WoodenShield => MaterialType::Weapon,
             Material::BronzeAxe => MaterialType::Axe,
             Material::LeatherGloves => MaterialType::Gloves,
         }
@@ -68,6 +73,7 @@ impl Material {
             Material::WoodenAxe => 50,
             Material::WoodenDagger => 50,
             Material::WoodenSword => 75,
+            Material::WoodenShield => 75,
             Material::BronzeAxe => 250,
             Material::LeatherGloves => 100,
         }
@@ -109,6 +115,9 @@ impl Material {
             }
             Material::WoodenSword => {
                 println!("Wooden sword is a better wooden weapon used to fight monsters.")
+            }
+            Material::WoodenShield => {
+                println!("Wooden shield is a basic wooden weapon used to protect against monsters.")
             }
             Material::BronzeAxe => {
                 println!("Bronze axe is a slightly better tool used to gather logs from trees.")

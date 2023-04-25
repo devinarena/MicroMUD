@@ -120,7 +120,8 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
                 thread::sleep(Duration::from_secs(1));
 
-                let e_max_hit = _max_hit_comp(eattack, pl_defense);
+                let defense_bonus = pl_defense;
+                let e_max_hit = _max_hit_comp(eattack, defense_bonus);
                 let edmg = (e_max_hit as f32 * random::<f32>()) as i32;
                 if random::<f32>() < ecrit_chance {
                     health -= edmg * 2;
