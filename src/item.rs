@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 pub mod armor;
+pub mod food;
 pub mod weapon;
 
 #[derive(PartialEq)]
@@ -17,10 +18,12 @@ pub enum MaterialType {
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Copy)]
 pub enum Material {
+    // Woodcutting
     Log,
     OakLog,
     BirchLog,
     Apple,
+    // Equipment
     WoodenAxe,
     WoodenDagger,
     WoodenSword,
@@ -32,6 +35,8 @@ pub enum Material {
     // GoldenAxe,
     // DiamondAxe,
     // DragonAxe,
+    // Monsters
+    TreeSpiritRemains,
 }
 
 impl Material {
@@ -47,6 +52,7 @@ impl Material {
             Material::WoodenShield => "Wooden Shield".to_string(),
             Material::BronzeAxe => "Bronze Axe".to_string(),
             Material::LeatherGloves => "Leather Gloves".to_string(),
+            Material::TreeSpiritRemains => "Tree Spirit Remains".to_string(),
         }
     }
 
@@ -62,6 +68,7 @@ impl Material {
             Material::WoodenShield => MaterialType::Weapon,
             Material::BronzeAxe => MaterialType::Axe,
             Material::LeatherGloves => MaterialType::Gloves,
+            Material::TreeSpiritRemains => MaterialType::Log,
         }
     }
 
@@ -77,6 +84,7 @@ impl Material {
             Material::WoodenShield => 75,
             Material::BronzeAxe => 250,
             Material::LeatherGloves => 100,
+            Material::TreeSpiritRemains => 200,
         }
     }
 
@@ -84,13 +92,6 @@ impl Material {
         match self {
             Material::BronzeAxe => ("woodcutting", 100),
             _ => ("melee", 1),
-        }
-    }
-
-    pub fn get_food_heal(&self) -> u32 {
-        match self {
-            Material::Apple => 10,
-            _ => 0,
         }
     }
 
@@ -106,25 +107,28 @@ impl Material {
                 println!("Birch Logs are gathered from birch trees and can be used in firemaking.")
             }
             Material::Apple => {
-                println!("Apples are gathered from woodcutting and can be eaten to heal.")
+                println!("Apples are gathered from woodcutting and can be eaten to heal.\nWhen eaten:\n\tHealth: +10")
             }
             Material::WoodenAxe => {
-                println!("Wooden axe is a basic tool used to gather logs from trees.")
+                println!("Wooden axe is a basic tool used to gather logs from trees.\nWhen equipped:\n\tWoodcutting: +1\n\tAttack: +1")
             }
             Material::WoodenDagger => {
-                println!("Wooden dagger is a basic wooden weapon used to fight monsters.")
+                println!("Wooden dagger is a basic wooden weapon used to fight monsters.\nWhen equipped:\n\tAttack: +1")
             }
             Material::WoodenSword => {
-                println!("Wooden sword is a better wooden weapon used to fight monsters.")
+                println!("Wooden sword is a better wooden weapon used to fight monsters.\nWhen equipped:\n\tAttack: +2")
             }
             Material::WoodenShield => {
-                println!("Wooden shield is a basic wooden weapon used to protect against monsters.")
+                println!("Wooden shield is a basic wooden weapon used to protect against monsters.\nWhen equipped:\n\tDefense: +1")
             }
             Material::BronzeAxe => {
-                println!("Bronze axe is a slightly better tool used to gather logs from trees.")
+                println!("Bronze axe is a slightly better tool used to gather logs from trees.\nWhen equipped:\n\tWoodcutting: +3\n\tAttack: +1")
             }
             Material::LeatherGloves => {
-                println!("Leather gloves can be worn on the hands to firemake.");
+                println!("Leather gloves can be worn on the hands to firemake.\nWhen equipped:\n\tDefense: +1");
+            }
+            Material::TreeSpiritRemains => {
+                println!("Tree Spirit Remains are gathered from Tree Spirits and can be used in firemaking.")
             }
             _ => println!("No description"),
         }
@@ -154,6 +158,7 @@ impl FromStr for Material {
             "WoodenShield" => Ok(Material::WoodenShield),
             "BronzeAxe" => Ok(Material::BronzeAxe),
             "LeatherGloves" => Ok(Material::LeatherGloves),
+            "TreeSpiritRemains" => Ok(Material::TreeSpiritRemains),
             _ => Err(()),
         }
     }

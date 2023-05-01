@@ -7,13 +7,175 @@ use crate::{
     combat::monsters::{rat::Rat, tree_spirit::TreeSpirit},
     game::{ACTION, PLAYER},
     io_manager::clear_screen,
-    item::{Item, Material},
-    player::Action,
+    item::Item,
+    player::{Action, Player},
 };
 
-use self::monsters::MonsterData;
+use self::monsters::{giant_rat::GiantRat, MonsterData};
 
 pub mod monsters;
+
+fn print_status(
+    pl: &mut Player,
+    monster: &Box<dyn MonsterData>,
+    health: i32,
+    ehealth: i32,
+    emax_health: i32,
+    elevel: u64,
+) {
+    println!(
+        "BATTLE BETWEEN {} (LVL {}) AND YOU (LVL {})",
+        monster.get_name(),
+        elevel as u32,
+        pl.get_combat_level() as u32
+    );
+    println!("========================================\n");
+
+    println!("> {}: {} / {}\n", monster.get_name(), ehealth, emax_health);
+
+    println!(
+        "> You: {} / {}",
+        health,
+        pl.get_level(&"hitpoints".to_string()) * 100
+    );
+
+    println!("\n========================================");
+}
+
+fn player_attack(
+    pl: &mut Player,
+    monster: &Box<dyn MonsterData>,
+    ehealth: &mut i32,
+    pl_crit_chance: f32,
+) {
+    let max_hit = _max_hit_comp(pl.get_attack_bonus(), monster.get_defense());
+    let damage = (max_hit as f32 * random::<f32>()) as i32;
+    if random::<f32>() < pl_crit_chance {
+        *ehealth -= damage * 2;
+        println!(
+            "You critically hit the {} for {} melee damage.",
+            monster.get_name(),
+            damage * 2
+        );
+    } else {
+        *ehealth -= damage;
+        println!(
+            "You hit the {} for {} melee damage.",
+            monster.get_name(),
+            damage
+        );
+    }
+}
+
+fn enemy_attack(
+    pl: &mut Player,
+    monster: &Box<dyn MonsterData>,
+    health: &mut i32,
+    eattack: u64,
+    ecrit_chance: f32,
+) {
+    let e_max_hit = _max_hit_comp(eattack, pl.get_defense_bonus());
+    let edmg = (e_max_hit as f32 * random::<f32>()) as i32;
+    if random::<f32>() < ecrit_chance {
+        *health -= edmg * 2;
+        println!(
+            "The {} critically hit you for {} {} damage.",
+            monster.get_name(),
+            edmg * 2,
+            monster.get_attack_style(),
+        );
+    } else {
+        *health -= edmg;
+        println!(
+            "The {} hit you for {} {} damage.",
+            monster.get_name(),
+            edmg,
+            monster.get_attack_style(),
+        );
+    }
+}
+
+fn eat_menu(
+    pl: &mut Player,
+    health: &mut i32,
+    monster: &Box<dyn MonsterData>,
+    ehealth: i32,
+    emax_health: i32,
+    elevel: u64,
+    eattack: u64,
+    ecrit_chance: f32,
+) {
+    if pl.get_inventory().get_items().len() == 0 {
+        println!("You have no items to use.");
+        thread::sleep(Duration::from_secs(2));
+        return;
+    }
+    let mut input: usize = 1;
+
+    while input != 0 {
+        clear_screen();
+
+        print_status(pl, monster, *health, ehealth, emax_health, elevel);
+
+        println!("\nWhat item would you like to use?");
+        let mut index = 1;
+        let mut food = Vec::<(Item, usize)>::new();
+        for (i, item) in pl.get_inventory().get_items().iter().enumerate() {
+            if item.get_material().get_food_heal() > 0 {
+                println!(
+                    "{}. {} (+{} hitpoints) (left: {})",
+                    index,
+                    item.get_material().get_name(),
+                    item.get_material().get_food_heal(),
+                    item.get_quantity()
+                );
+                food.push((item.clone(), i));
+                index += 1;
+            }
+        }
+        println!("{}. Cancel", index);
+
+        print!("> ");
+
+        input = read!();
+
+        if input == index {
+            break;
+        }
+
+        if input < 1 || input > index {
+            println!(
+                "Invalid input. Please enter a number between 1 and {}.",
+                index
+            );
+            thread::sleep(Duration::from_secs(2));
+            continue;
+        }
+
+        let item = &food[input - 1];
+
+        if item.0.get_material().get_food_heal() == 0 {
+            println!("You cannot eat that item.");
+            thread::sleep(Duration::from_secs(2));
+            continue;
+        } else {
+            let heal = item.0.get_material().get_food_heal() as i32;
+            *health += heal;
+            pl.get_inventory_mut().remove_quantity(item.1, 1);
+            println!(
+                "You eat the {} and heal {} health.",
+                item.0.get_material().get_name(),
+                heal
+            );
+            thread::sleep(Duration::from_secs(1));
+
+            enemy_attack(pl, monster, health, eattack, ecrit_chance);
+
+            thread::sleep(Duration::from_secs(2));
+            break;
+        }
+    }
+}
 
 fn fight(monster: &Box<dyn MonsterData>) {
     clear_screen();
@@ -30,17 +192,14 @@ fn fight(monster: &Box<dyn MonsterData>) {
     let mut ehealth: i32 = (monster.get_hitpoints() * 100) as i32;
     let emax_health = ehealth;
 
-    let pl_level = (pl.get_level(&"melee".to_string())
-        + pl.get_level(&"ranged".to_string())
-        + pl.get_level(&"magic".to_string())
-        + pl.get_level(&"defense".to_string())) as f32
-        / 4.0;
     let pl_crit_chance = 0.15;
 
-    let elevel =
-        ((monster.get_melee() + monster.get_magic() + monster.get_ranged() + monster.get_defense())
-            as f32
-            / 4.0) as i32;
+    let elevel = ((monster.get_melee()
+        + monster.get_magic()
+        + monster.get_ranged()
+        + monster.get_defense()
+        + monster.get_hitpoints()) as f32
+        / 5.0) as u64;
     let eattack = match monster.get_attack_style().as_str() {
         "melee" => monster.get_melee(),
         "ranged" => monster.get_ranged(),
@@ -54,87 +213,51 @@ fn fight(monster: &Box<dyn MonsterData>) {
     while health > 0 && ehealth > 0 {
         clear_screen();
 
-        println!(
-            "BATTLE BETWEEN {} (LVL {}) AND YOU (LVL {})",
-            monster.get_name(),
-            elevel as u32,
-            pl_level as u32
-        );
-        println!("========================================\n");
-
-        println!("> {}: {} / {}\n", monster.get_name(), ehealth, emax_health);
-
-        println!(
-            "> You: {} / {}",
-            health,
-            pl.get_level(&"hitpoints".to_string()) * 100
-        );
-
-        println!("\n========================================");
+        print_status(&mut pl, monster, health, ehealth, emax_health, elevel);
 
         println!("\nWhat would you like to do?");
         println!("1. Attack");
         println!("2. Item");
-        println!("3. Run");
+        println!("3. Magic");
+        println!("4. Run");
 
         print!("> ");
 
         let mut input: usize = read!();
 
-        while input < 1 || input > 3 {
-            println!("Invalid input. Please enter a number between 1 and 3.");
+        while input < 1 || input > 4 {
+            println!("Invalid input. Please enter a number between 1 and 4.");
             print!("> ");
             input = read!();
         }
 
         match input {
             1 => {
-                let max_hit = _max_hit_comp(pl.get_attack_bonus(), monster.get_defense());
-                let damage = (max_hit as f32 * random::<f32>()) as i32;
-                if random::<f32>() < pl_crit_chance {
-                    ehealth -= damage * 2;
-                    println!(
-                        "You critically hit the {} for {} melee damage.",
-                        monster.get_name(),
-                        damage * 2
-                    );
-                } else {
-                    ehealth -= damage;
-                    println!(
-                        "You hit the {} for {} melee damage.",
-                        monster.get_name(),
-                        damage
-                    );
-                }
+                player_attack(&mut pl, monster, &mut ehealth, pl_crit_chance);
 
                 thread::sleep(Duration::from_secs(1));
 
-                let e_max_hit = _max_hit_comp(eattack, pl.get_defense_bonus());
-                let edmg = (e_max_hit as f32 * random::<f32>()) as i32;
-                if random::<f32>() < ecrit_chance {
-                    health -= edmg * 2;
-                    println!(
-                        "The {} critically hit you for {} {} damage.",
-                        monster.get_name(),
-                        edmg * 2,
-                        monster.get_attack_style(),
-                    );
-                } else {
-                    health -= edmg;
-                    println!(
-                        "The {} hit you for {} {} damage.",
-                        monster.get_name(),
-                        edmg,
-                        monster.get_attack_style(),
-                    );
-                }
+                enemy_attack(&mut pl, monster, &mut health, eattack, ecrit_chance);
 
                 thread::sleep(Duration::from_secs(2));
             }
             2 => {
-                println!("You don't have any items!");
+                eat_menu(
+                    &mut pl,
+                    &mut health,
+                    monster,
+                    ehealth,
+                    emax_health,
+                    elevel,
+                    eattack,
+                    ecrit_chance,
+                );
             }
             3 => {
+                println!("You don't know any magic spells.");
+                thread::sleep(Duration::from_secs(2));
+            }
+            4 => {
                 println!("You run away humiliated but alive.");
                 thread::sleep(Duration::from_secs(3));
                 *ACTION.lock().unwrap() = Action::IDLE;
@@ -153,9 +276,9 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         thread::sleep(Duration::from_secs(1));
 
-        let xp = (elevel as u64) * 40;
-        let hp_xp = monster.get_hitpoints() as u64 * 40;
-        let defense_xp = (pl.get_level(&"hitpoints".to_string()) as u64 * 100 - health as u64) / 2;
+        let xp = (elevel as u64) * 15;
+        let hp_xp = monster.get_hitpoints() as u64 * 20;
+        let defense_xp = (pl.get_level(&"hitpoints".to_string()) as u64 * 100 - health as u64) / 3;
         pl.add_xp(&"melee".to_string(), xp);
         pl.add_xp(&"hitpoints".to_string(), hp_xp);
         pl.add_xp(&"defense".to_string(), defense_xp);
@@ -251,6 +374,7 @@ pub fn combat_menu() {
 
     let mut monsters: Vec<Box<dyn MonsterData>> = Vec::new();
     monsters.push(Box::new(Rat::new()));
+    monsters.push(Box::new(GiantRat::new()));
     monsters.push(Box::new(TreeSpirit::new()));
 
     while input as usize != monsters.len() + 1 {
@@ -300,6 +424,6 @@ pub fn combat_menu() {
 }
 
 fn _max_hit_comp(attack: u64, defense: u64) -> u32 {
-    let max_hit = (25.0 * 1.25_f64.powi(attack as i32 / 4) / 1.1_f64.powi(defense as i32 / 4)) as u32;
+    let max_hit = (15.0 * (attack as f64 + 1.0) / (defense as f64 + 1.0).sqrt()).ceil() as u32;
     max_hit
 }

@@ -38,7 +38,7 @@ pub fn firemake(material: Material) {
     let index = pl.get_inventory().find_item_index(material);
 
     if index.is_none() {
-        println!("You don't have any {}s to burn!", material.get_name());
+        println!("You don't have any {} to burn!", material.get_name());
         thread::sleep(Duration::new(3, 0));
         return;
     }
@@ -68,7 +68,7 @@ pub fn firemake(material: Material) {
         pl.add_xp(skill, material.get_firemaking_xp());
 
         if quantity == 1 {
-            println!("You have run out of {}s to burn!", material.get_name());
+            println!("You have run out of {} to burn!", material.get_name());
             thread::sleep(Duration::new(3, 0));
             *ACTION.lock().unwrap() = Action::IDLE;
         }
@@ -83,7 +83,12 @@ pub fn firemake(material: Material) {
 pub fn firemaking_menu() {
     let mut input: u32 = 0;
 
-    let burnable = vec![Material::Log, Material::OakLog, Material::BirchLog];
+    let burnable = vec![
+        Material::Log,
+        Material::OakLog,
+        Material::BirchLog,
+        Material::TreeSpiritRemains,
+    ];
 
     while input as usize != burnable.len() + 1 {
         clear_screen();
@@ -94,10 +99,11 @@ pub fn firemaking_menu() {
         let mut i = 1;
         for material in &burnable {
             println!(
-                "  {}. {} ({} xp) (req: 1x{})",
+                "  {}. {} ({} xp) (req: {} firemaking, 1x{})",
                 i,
                 material.get_name(),
                 material.get_firemaking_xp(),
+                material.get_firemaking_level(),
                 material.get_name()
             );
             i += 1;
