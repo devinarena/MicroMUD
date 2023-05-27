@@ -1,9 +1,12 @@
-use std::thread;
+use std::{
+    thread::{self, Thread},
+    time::Duration, io::{self, Write},
+};
 
 use text_io::read;
 
 use crate::{
-    game::{game_loop, ACTION, LOADED, PLAYER, give_starter_items},
+    game::{game_loop, give_starter_items, ACTION, LOADED, PLAYER},
     io_manager::{clear_screen, get_all_saves, read_player_save, write_player_save},
     player::{Action, Player},
 };
@@ -85,6 +88,25 @@ pub fn main_menu() {
         let saves = get_all_saves();
         if saves.len() == 0 {
             println!("No saves were found.");
+
+            println!("Welcome to the game! The first step is to create a character!");
+
+            thread::sleep(Duration::from_secs(2));
+
+            create_character_menu();
+
+            println!();
+            println!("Now the adventure begins! Travel around new areas to train skills, complete quests, and fight monsters.");
+
+            for i in 0..5 {
+                thread::sleep(Duration::from_secs(1));
+                print!("{}... ", 5 - i);
+                io::stdout().flush().unwrap();
+            }
+
+            thread::sleep(Duration::from_secs(1));
+
+            game_loop();
         }
 
         println!();

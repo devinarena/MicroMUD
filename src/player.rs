@@ -3,6 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 use serde_json::{json, Value};
 
 use crate::{
+    combat::ability::Ability,
     inventory::Inventory,
     item::{Item, Material},
 };
@@ -35,6 +36,7 @@ pub struct Player {
     gold: u64,
     health: i32,
     location: String,
+    abilities: Vec<Ability>,
 }
 
 impl Player {
@@ -46,6 +48,7 @@ impl Player {
             gold: 0,
             health: 100,
             location: "Littlewood Town".to_string(),
+            abilities: vec![],
         };
 
         player.xp.insert("hitpoints".to_string(), 0);
@@ -72,46 +75,8 @@ impl Player {
             gold: 0,
             health: 0,
             location: "".to_string(),
+            abilities: vec![],
         }
-    }
-
-    pub fn equip(&mut self, index: usize, slot: &str) -> String {
-        let item = self.inventory.get_item(index).clone();
-
-        let mat = item.get_material();
-        let req = mat.get_required_level_equip();
-        if self.get_level(&req.0.to_string()) < req.1 {
-            return format!("You need level {} {} to equip this item.", req.1, req.0);
-        }
-
-        self.inventory.remove_item(index);
-
-        let old = match slot {
-            "helmet" => self.inventory.get_helmet().clone(),
-            "chestplate" => self.inventory.get_chestplate().clone(),
-            "leggings" => self.inventory.get_leggings().clone(),
-            "boots" => self.inventory.get_boots().clone(),
-            "main_hand" => self.inventory.get_main_hand().clone(),
-            "off_hand" => self.inventory.get_off_hand().clone(),
-            _ => return format!("{} is not a valid slot.", slot),
-        };
-
-        match slot {
-            "helmet" => self.inventory.set_helmet(Some(item)),
-            "chestplate" => self.inventory.set_chestplate(Some(item)),
-            "leggings" => self.inventory.set_leggings(Some(item)),
-            "boots" => self.inventory.set_boots(Some(item)),
-            "main_hand" => self.inventory.set_main_hand(Some(item)),
-            "off_hand" => self.inventory.set_off_hand(Some(item)),
-            _ => return format!("{} is not a valid slot.", slot),
-        }
-
-        if let Some(i) = old {
-            println!("Adding {} to inventory.", i.get_material().get_name());
-            self.inventory.add_item(i);
-        }
-
-        String::new()
     }
 
     pub fn deserialize(json: &Value) -> Player {
@@ -123,6 +88,7 @@ impl Player {
             gold: json["gold"].as_u64().unwrap(),
             health: 100,
             location: "Littlewood Town".to_string(),
+            abilities: vec![],
         };
 
         player.xp.insert(
@@ -168,6 +134,10 @@ impl Player {
 
         player.inventory.deserialize(&json["inventory"]);
 
+        player.set_health((player.get_level(&"hitpoints".to_string()) * 100) as i32);
+
+        player.register_abilities();
+
         return player;
     }
 
@@ -195,6 +165,10 @@ impl Player {
 
     pub fn get_health(&self) -> i32 {
         self.get_level(&"hitpoints".to_string()) as i32 * 100
+    }
+
+    pub fn set_health(&mut self, health: i32) {
+        self.health = health;
     }
 
     pub fn get_inventory(&self) -> &Inventory {
@@ -278,6 +252,7 @@ impl Player {
 
     pub fn get_attack_bonus(&self) -> u64 {
         let mut attack_bonus: u64 = self.get_level(&"melee".to_string());
+
         if let Some(item) = self.inventory.get_main_hand() {
             attack_bonus += item.get_material().get_melee_bonus();
         }
@@ -296,11 +271,13 @@ impl Player {
         if let Some(item) = self.inventory.get_boots() {
             attack_bonus += item.get_material().get_attack_bonus();
         }
+
         return attack_bonus;
     }
 
     pub fn get_defense_bonus(&self) -> u64 {
         let mut defense_bonus: u64 = self.get_level(&"defense".to_string());
+
         if let Some(item) = self.inventory.get_main_hand() {
             defense_bonus += item.get_material().get_defense_bonus();
         }
@@ -319,6 +296,7 @@ impl Player {
         if let Some(item) = self.inventory.get_boots() {
             defense_bonus += item.get_material().get_defense_bonus();
         }
+
         return defense_bonus;
     }
 
@@ -330,6 +308,77 @@ impl Player {
         combat_level += self.get_level(&"magic".to_string());
         combat_level += self.get_level(&"hitpoints".to_string());
         return combat_level / 5;
+    }
+
+    pub fn get_abilities(&self) -> &Vec<Ability> {
+        &self.abilities
+    }
+
+    pub fn equip(&mut self, index: usize, slot: &str) -> String {
+        let item = self.inventory.get_item(index).clone();
+
+        let mat = item.get_material();
+        let req = mat.get_required_level_equip();
+
+        if mat.get_slot() == "none" {
+            return format!("You cannot equip {}.", mat.get_name());
+        } else if mat.get_slot() != slot {
+            return format!(
+                "{} must be equipped in your {}.",
+                mat.get_name(),
+                mat.get_slot()
+            );
+        }
+
+        if self.get_level(&req.0.to_string()) < req.1 {
+            return format!("You need level {} {} to equip this item.", req.1, req.0);
+        }
+
+        self.inventory.remove_item(index);
+
+        let old = match slot {
+            "helmet" => self.inventory.get_helmet().clone(),
+            "chestplate" => self.inventory.get_chestplate().clone(),
+            "leggings" => self.inventory.get_leggings().clone(),
+            "boots" => self.inventory.get_boots().clone(),
+            "main_hand" => self.inventory.get_main_hand().clone(),
+            "off_hand" => self.inventory.get_off_hand().clone(),
+            _ => return format!("{} is not a valid slot.", slot),
+        };
+
+        match slot {
+            "helmet" => self.inventory.set_helmet(Some(item)),
+            "chestplate" => self.inventory.set_chestplate(Some(item)),
+            "leggings" => self.inventory.set_leggings(Some(item)),
+            "boots" => self.inventory.set_boots(Some(item)),
+            "main_hand" => self.inventory.set_main_hand(Some(item)),
+            "off_hand" => self.inventory.set_off_hand(Some(item)),
+            _ => return format!("{} is not a valid slot.", slot),
+        }
+
+        if let Some(i) = old {
+            println!("Adding {} to inventory.", i.get_material().get_name());
+            self.inventory.add_item(i);
+        }
+
+        String::new()
+    }
+
+    pub fn register_abilities(&mut self) {
+        self.abilities.push(Ability::new(
+            "Backhand".to_string(),
+            "Forcefully backhand your opponent, dealing a guaranteed 15 melee damage.".to_string(),
+            "melee".to_string(),
+            1,
+            0.1,
+            |_, _, _, _, monster, ehealth, _, _, _, _, _| -> () {
+                *ehealth -= 15;
+                println!(
+                    "Your backhand deals 15 damage to {}!",
+                    monster.get_name()
+                );
+            }            
+        ))
     }
 
     pub fn print_stats(&self) {

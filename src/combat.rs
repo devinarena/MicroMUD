@@ -4,7 +4,10 @@ use rand::random;
 use text_io::read;
 
 use crate::{
-    combat::monsters::{rat::Rat, tree_spirit::TreeSpirit},
+    combat::{
+        ability::Ability,
+        monsters::{rat::Rat, tree_spirit::TreeSpirit},
+    },
     game::{ACTION, PLAYER},
     io_manager::clear_screen,
     item::Item,
@@ -13,15 +16,20 @@ use crate::{
 
 use self::monsters::{giant_rat::GiantRat, MonsterData};
 
+pub mod ability;
 pub mod monsters;
 
+// TODO: maybe figure out a better way to pass combat state around
 fn print_status(
     pl: &mut Player,
     monster: &Box<dyn MonsterData>,
     health: i32,
+    max_health: i32,
+    adrenaline: f32,
     ehealth: i32,
     emax_health: i32,
     elevel: u64,
+    eadrenaline: f32,
 ) {
     println!(
         "BATTLE BETWEEN {} (LVL {}) AND YOU (LVL {})",
@@ -31,13 +39,11 @@ fn print_status(
     );
     println!("========================================\n");
 
-    println!("> {}: {} / {}\n", monster.get_name(), ehealth, emax_health);
+    println!("> {}: {} / {}", monster.get_name(), ehealth, emax_health);
+    println!("  - Adrenaline: {:.2}%\n", eadrenaline * 100.0);
 
-    println!(
-        "> You: {} / {}",
-        health,
-        pl.get_level(&"hitpoints".to_string()) * 100
-    );
+    println!("> You: {} / {}", health, max_health);
+    println!("  - Adrenaline: {:.2}%", adrenaline * 100.0);
 
     println!("\n========================================");
 }
@@ -98,12 +104,15 @@ fn enemy_attack(
 fn eat_menu(
     pl: &mut Player,
     health: &mut i32,
+    max_health: i32,
+    adrenaline: f32,
     monster: &Box<dyn MonsterData>,
     ehealth: i32,
     emax_health: i32,
     elevel: u64,
     eattack: u64,
     ecrit_chance: f32,
+    eadrenaline: f32,
 ) {
     if pl.get_inventory().get_items().len() == 0 {
         println!("You have no items to use.");
@@ -115,7 +124,17 @@ fn eat_menu(
     while input != 0 {
         clear_screen();
 
-        print_status(pl, monster, *health, ehealth, emax_health, elevel);
+        print_status(
+            pl,
+            monster,
+            *health,
+            max_health,
+            adrenaline,
+            ehealth,
+            emax_health,
+            elevel,
+            eadrenaline,
+        );
 
         println!("\nWhat item would you like to use?");
         let mut index = 1;
@@ -177,6 +196,100 @@ fn eat_menu(
     }
 }
 
+fn ability_menu(
+    pl: &mut Player,
+    health: &mut i32,
+    max_health: i32,
+    adrenaline: &mut f32,
+    monster: &Box<dyn MonsterData>,
+    ehealth: &mut i32,
+    emax_health: i32,
+    elevel: u64,
+    eattack: u64,
+    ecrit_chance: f32,
+    eadrenaline: f32,
+) {
+    let mut input: usize = 1;
+
+    while input != 0 {
+        clear_screen();
+
+        print_status(
+            pl,
+            monster,
+            *health,
+            max_health,
+            *adrenaline,
+            *ehealth,
+            emax_health,
+            elevel,
+            eadrenaline,
+        );
+
+        println!("\nWhat ability would you like to use?");
+        let mut index = 1;
+        let abilities = pl.get_abilities();
+
+        for ability in abilities.iter() {
+            println!(
+                "{}. {} ({:.2}% adrenaline)",
+                index,
+                ability.get_name(),
+                ability.get_cost() * 100.0,
+            );
+            index += 1;
+        }
+        println!("{}. Cancel", index);
+
+        print!("> ");
+
+        input = read!();
+
+        if input == index {
+            break;
+        }
+
+        if input < 1 || input > index {
+            println!(
+                "Invalid input. Please enter a number between 1 and {}.",
+                index
+            );
+            thread::sleep(Duration::from_secs(2));
+            continue;
+        }
+
+        let ability = &abilities[input - 1];
+
+        if *adrenaline < ability.get_cost() {
+            println!("You do not have enough adrenaline to use that ability.");
+            thread::sleep(Duration::from_secs(2));
+            continue;
+        }
+
+        *adrenaline -= ability.get_cost();
+
+        (ability.activate)(
+            pl,
+            health,
+            max_health,
+            *adrenaline,
+            monster,
+            ehealth,
+            emax_health,
+            elevel,
+            eattack,
+            ecrit_chance,
+            eadrenaline,
+        );
+
+        thread::sleep(Duration::from_secs(2));
+
+        enemy_attack(pl, monster, health, eattack, ecrit_chance);
+
+        thread::sleep(Duration::from_secs(2));
+    }
+}
+
 fn fight(monster: &Box<dyn MonsterData>) {
     clear_screen();
 
@@ -189,8 +302,12 @@ fn fight(monster: &Box<dyn MonsterData>) {
     }
 
     let mut health: i32 = pl.get_health();
+    let max_health: i32 = (pl.get_level(&"hitpoints".to_string()) * 100) as i32;
+    let mut adrenaline = 1.0;
+
     let mut ehealth: i32 = (monster.get_hitpoints() * 100) as i32;
     let emax_health = ehealth;
+    let mut eadrenaline = 0.0;
 
     let pl_crit_chance = 0.15;
 
@@ -213,19 +330,30 @@ fn fight(monster: &Box<dyn MonsterData>) {
     while health > 0 && ehealth > 0 {
         clear_screen();
 
-        print_status(&mut pl, monster, health, ehealth, emax_health, elevel);
+        print_status(
+            &mut pl,
+            monster,
+            health,
+            max_health,
+            adrenaline,
+            ehealth,
+            emax_health,
+            elevel,
+            eadrenaline,
+        );
 
         println!("\nWhat would you like to do?");
         println!("1. Attack");
-        println!("2. Item");
-        println!("3. Magic");
-        println!("4. Run");
+        println!("2. Ability");
+        println!("3. Item");
+        println!("4. Magic");
+        println!("5. Run");
 
         print!("> ");
 
         let mut input: usize = read!();
 
-        while input < 1 || input > 4 {
+        while input < 1 || input > 5 {
             println!("Invalid input. Please enter a number between 1 and 4.");
             print!("> ");
             input = read!();
@@ -242,22 +370,40 @@ fn fight(monster: &Box<dyn MonsterData>) {
                 thread::sleep(Duration::from_secs(2));
             }
             2 => {
+                ability_menu(
+                    &mut pl,
+                    &mut health,
+                    max_health,
+                    &mut adrenaline,
+                    monster,
+                    &mut ehealth,
+                    emax_health,
+                    elevel,
+                    eattack,
+                    ecrit_chance,
+                    eadrenaline,
+                );
+            }
+            3 => {
                 eat_menu(
                     &mut pl,
                     &mut health,
+                    max_health,
+                    adrenaline,
                     monster,
                     ehealth,
                     emax_health,
                     elevel,
                     eattack,
                     ecrit_chance,
+                    eadrenaline,
                 );
             }
-            3 => {
+            4 => {
                 println!("You don't know any magic spells.");
                 thread::sleep(Duration::from_secs(2));
             }
-            4 => {
+            5 => {
                 println!("You run away humiliated but alive.");
                 thread::sleep(Duration::from_secs(3));
                 *ACTION.lock().unwrap() = Action::IDLE;
@@ -424,6 +570,7 @@ pub fn combat_menu() {
 }
 
 fn _max_hit_comp(attack: u64, defense: u64) -> u32 {
-    let max_hit = (15.0 * (attack as f64 + 1.0) / (defense as f64 + 1.0).sqrt()).ceil() as u32;
-    max_hit
+    let max_hit =
+        (20.0 * (1.075f64.powf(attack as f64 - 1.0) / 1.025f64.powf(defense as f64 - 1.0))).ceil();
+    max_hit as u32
 }

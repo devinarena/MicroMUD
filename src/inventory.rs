@@ -294,7 +294,11 @@ pub fn print_inventory() {
         println!("  Off Hand: None");
     }
     if let Some(item) = &player.get_inventory().get_helmet() {
-        println!("  Helmet: {} x {}", item.get_material(), item.get_quantity());
+        println!(
+            "  Helmet: {} x {}",
+            item.get_material(),
+            item.get_quantity()
+        );
     } else {
         println!("  Helmet: None");
     }
@@ -322,8 +326,14 @@ pub fn print_inventory() {
         println!("  Boots: None");
     }
 
-    println!("\nAttack Bonus: {}", player.get_attack_bonus() - player.get_level(&"melee".to_string()));
-    println!("Defense Bonus: {}", player.get_defense_bonus() - player.get_level(&"defense".to_string()));
+    println!(
+        "\nAttack Bonus: {}",
+        player.get_attack_bonus() - player.get_level(&"melee".to_string())
+    );
+    println!(
+        "Defense Bonus: {}",
+        player.get_defense_bonus() - player.get_level(&"defense".to_string())
+    );
 
     println!("\nInventory:");
     let mut index = 0;
@@ -335,6 +345,96 @@ pub fn print_inventory() {
             item.get_quantity()
         );
         index += 1;
+    }
+}
+
+fn help_menu() {
+    clear_screen();
+    print_inventory();
+    println!("(type 'help' for inventory commands)");
+    println!("help(h) - displays this message");
+    println!("back(b) - returns to the main menu");
+    println!("drop(d) [index] <amount> - drops an item from your inventory");
+    println!("main_hand(mh) <index> - equips an item to your main hand, type no index to unequip");
+    println!("off_hand(oh) <index> - equips an item to your off hand, type no index to unequip");
+    println!("helmet(hm) <index> - equips an item to your helmet, type no index to unequip");
+    println!(
+        "chestplate(cp) <index> - equips an item to your chestplate, type no index to unequip"
+    );
+    println!("leggings(lg) <index> - equips an item to your leggings, type no index to unequip");
+    println!("boots(bt) <index> - equips an item to your boots, type no index to unequip");
+    println!("info(i) [index] - displays information about an item");
+    println!("value(v) <index> - displays the value of an item, omit <item> to see total inventory value");
+    println!("sell(s) [index] [amount|all] - sells an item from your inventory")
+}
+
+pub fn equip(index: i32, slot: &str) {
+    let mut player = PLAYER.lock().unwrap();
+    let inv_mut = player.get_inventory_mut();
+
+    if index <= 0 {
+        let item = match slot {
+            "main_hand" => inv_mut.get_main_hand_mut().take(),
+            "off_hand" => inv_mut.get_off_hand_mut().take(),
+            "helmet" => inv_mut.get_helmet_mut().take(),
+            "chestplate" => inv_mut.get_chestplate_mut().take(),
+            "leggings" => inv_mut.get_leggings_mut().take(),
+            "boots" => inv_mut.get_boots_mut().take(),
+            _ => {
+                println!("Invalid slot");
+                return;
+            }
+        };
+
+        if let Some(item) = &item {
+            let mat = item.get_material();
+
+            inv_mut.add_item(item.to_owned());
+
+            println!("Unequipped {} from {}.", mat, slot);
+
+            drop(player);
+
+            thread::sleep(Duration::from_secs(1));
+            clear_screen();
+            print_inventory();
+        } else {
+            println!("No item in {}", slot);
+
+            drop(player);
+
+            thread::sleep(Duration::from_secs(1));
+            clear_screen();
+            print_inventory()
+        }
+    } else {
+        if index > inv_mut.get_items().len() as i32 {
+            println!("No item at index {}", index);
+            return;
+        }
+
+        let res = player.equip((index - 1) as usize, slot);
+
+        if res == "" {
+            println!(
+                "Equipped {} in {}",
+                player
+                    .get_inventory()
+                    .get_main_hand()
+                    .as_ref()
+                    .unwrap()
+                    .get_material(),
+                slot
+            );
+
+            drop(player);
+
+            thread::sleep(Duration::from_secs(1));
+            clear_screen();
+            print_inventory();
+        } else {
+            println!("{}", res);
+        }
     }
 }
 
@@ -359,33 +459,7 @@ pub fn view_inventory() {
 
         match tokens[0] {
             "help" | "h" => {
-                clear_screen();
-                print_inventory();
-                println!("Available commands:");
-                println!("help(h) - displays this message");
-                println!("back(b) - returns to the main menu");
-                println!("drop(d) [index] <amount> - drops an item from your inventory");
-                println!(
-                    "main_hand(mh) <index> - equips an item to your main hand, type no index to unequip"
-                );
-                println!(
-                    "off_hand(oh) <index> - equips an item to your off hand, type no index to unequip"
-                );
-                println!(
-                    "helmet(hm) <index> - equips an item to your helmet, type no index to unequip"
-                );
-                println!(
-                    "chestplate(cp) <index> - equips an item to your chestplate, type no index to unequip"
-                );
-                println!(
-                    "leggings(lg) <index> - equips an item to your leggings, type no index to unequip"
-                );
-                println!(
-                    "boots(bt) <index> - equips an item to your boots, type no index to unequip"
-                );
-                println!("info(i) [index] - displays information about an item");
-                println!("value(v) <index> - displays the value of an item, omit <item> to see total inventory value");
-                println!("sell(s) [index] [amount|all] - sells an item from your inventory")
+                help_menu();
             }
             "drop" | "d" => {
                 if tokens.len() < 2 {
@@ -419,261 +493,63 @@ pub fn view_inventory() {
             }
             "main_hand" | "mh" => {
                 if tokens.len() == 1 {
-                    let item = PLAYER
-                        .lock()
-                        .unwrap()
-                        .get_inventory_mut()
-                        .get_main_hand_mut()
-                        .take();
-                    let mat = item.as_ref().unwrap().get_material();
-                    if let Some(item) = item {
-                        PLAYER.lock().unwrap().get_inventory_mut().add_item(item);
-                    }
-                    println!("Unequipped {} from main hand.", mat);
-                    thread::sleep(Duration::from_secs(1));
-                    clear_screen();
-                    print_inventory();
+                    equip(-1, "main_hand");
                     continue;
                 }
 
                 let index = tokens[1].parse::<usize>().unwrap();
 
-                let mut player = PLAYER.lock().unwrap();
-
-                let res = player.equip(index - 1, "main_hand");
-
-                if res == "" {
-                    println!(
-                        "Equipped {} in main hand",
-                        player
-                            .get_inventory()
-                            .get_main_hand()
-                            .as_ref()
-                            .unwrap()
-                            .get_material()
-                    );
-                    drop(player);
-                    thread::sleep(Duration::from_secs(1));
-                    clear_screen();
-                    print_inventory();
-                } else {
-                    println!("{}", res);
-                }
+                equip(index as i32, "main_hand")
             }
             "off_hand" | "oh" => {
                 if tokens.len() == 1 {
-                    let item = PLAYER
-                        .lock()
-                        .unwrap()
-                        .get_inventory_mut()
-                        .get_off_hand_mut()
-                        .take();
-                    let mat = item.as_ref().unwrap().get_material();
-                    if let Some(item) = item {
-                        PLAYER.lock().unwrap().get_inventory_mut().add_item(item);
-                    }
-                    println!("Unequipped {} from off hand.", mat);
-                    thread::sleep(Duration::from_secs(1));
-                    clear_screen();
-                    print_inventory();
+                    equip(-1, "off_hand");
                     continue;
                 }
 
                 let index = tokens[1].parse::<usize>().unwrap();
 
-                let mut player = PLAYER.lock().unwrap();
-
-                let res = player.equip(index - 1, "off_hand");
-
-                if res == "" {
-                    println!(
-                        "Equipped {} in off hand",
-                        player
-                            .get_inventory()
-                            .get_off_hand()
-                            .as_ref()
-                            .unwrap()
-                            .get_material()
-                    );
-                    drop(player);
-                    thread::sleep(Duration::from_secs(1));
-                    clear_screen();
-                    print_inventory();
-                } else {
-                    println!("{}", res);
-                }   
+                equip(index as i32, "off_hand")
             }
             "helmet" | "hm" => {
                 if tokens.len() == 1 {
-                    let item = PLAYER
-                        .lock()
-                        .unwrap()
-                        .get_inventory_mut()
-                        .get_helmet_mut()
-                        .take();
-                    let mat = item.as_ref().unwrap().get_material();
-                    if let Some(item) = item {
-                        PLAYER.lock().unwrap().get_inventory_mut().add_item(item);
-                    }
-                    println!("Unequipped {} from helm.", mat);
-                    thread::sleep(Duration::from_secs(1));
-                    clear_screen();
-                    print_inventory();
+                    equip(-1, "helmet");
                     continue;
                 }
 
                 let index = tokens[1].parse::<usize>().unwrap();
 
-                let mut player = PLAYER.lock().unwrap();
-
-                let res = player.equip(index - 1, "helmet");
-
-                if res == "" {
-                    println!(
-                        "Equipped {} in helm",
-                        player
-                            .get_inventory()
-                            .get_helmet()
-                            .as_ref()
-                            .unwrap()
-                            .get_material()
-                    );
-                    drop(player);
-                    thread::sleep(Duration::from_secs(1));
-                    clear_screen();
-                    print_inventory();
-                } else {
-                    println!("{}", res);
-                }
+                equip(index as i32, "helmet")
             }
             "chestplate" | "cp" => {
                 if tokens.len() == 1 {
-                    let item = PLAYER
-                        .lock()
-                        .unwrap()
-                        .get_inventory_mut()
-                        .get_chestplate_mut()
-                        .take();
-                    let mat = item.as_ref().unwrap().get_material();
-                    if let Some(item) = item {
-                        PLAYER.lock().unwrap().get_inventory_mut().add_item(item);
-                    }
-                    println!("Unequipped {} from chestplate.", mat);
-                    thread::sleep(Duration::from_secs(1));
-                    clear_screen();
-                    print_inventory();
+                    equip(-1, "chestplate");
                     continue;
                 }
 
                 let index = tokens[1].parse::<usize>().unwrap();
 
-                let mut player = PLAYER.lock().unwrap();
-
-                let res = player.equip(index - 1, "chestplate");
-
-                if res == "" {
-                    println!(
-                        "Equipped {} in chestplate",
-                        player
-                            .get_inventory()
-                            .get_chestplate()
-                            .as_ref()
-                            .unwrap()
-                            .get_material()
-                    );
-                    drop(player);
-                    thread::sleep(Duration::from_secs(1));
-                    clear_screen();
-                    print_inventory();
-                } else {
-                    println!("{}", res);
-                }
+                equip(index as i32, "chestplate")
             }
             "leggings" | "lg" => {
                 if tokens.len() == 1 {
-                    let item = PLAYER
-                        .lock()
-                        .unwrap()
-                        .get_inventory_mut()
-                        .get_leggings_mut()
-                        .take();
-                    let mat = item.as_ref().unwrap().get_material();
-                    if let Some(item) = item {
-                        PLAYER.lock().unwrap().get_inventory_mut().add_item(item);
-                    }
-                    println!("Unequipped {} from leggings.", mat);
-                    thread::sleep(Duration::from_secs(1));
-                    clear_screen();
-                    print_inventory();
+                    equip(-1, "leggings");
                     continue;
                 }
 
                 let index = tokens[1].parse::<usize>().unwrap();
 
-                let mut player = PLAYER.lock().unwrap();
-
-                let res = player.equip(index - 1, "leggings");
-
-                if res == "" {
-                    println!(
-                        "Equipped {} in leggings",
-                        player
-                            .get_inventory()
-                            .get_leggings()
-                            .as_ref()
-                            .unwrap()
-                            .get_material()
-                    );
-                    drop(player);
-                    thread::sleep(Duration::from_secs(1));
-                    clear_screen();
-                    print_inventory();
-                } else {
-                    println!("{}", res);
-                }
+                equip(index as i32, "leggings")
             }
             "boots" | "bt" => {
                 if tokens.len() == 1 {
-                    let item = PLAYER
-                        .lock()
-                        .unwrap()
-                        .get_inventory_mut()
-                        .get_boots_mut()
-                        .take();
-                    let mat = item.as_ref().unwrap().get_material();
-                    if let Some(item) = item {
-                        PLAYER.lock().unwrap().get_inventory_mut().add_item(item);
-                    }
-                    println!("Unequipped {} from boots.", mat);
-                    thread::sleep(Duration::from_secs(1));
-                    clear_screen();
-                    print_inventory();
+                    equip(-1, "boots");
                     continue;
                 }
 
                 let index = tokens[1].parse::<usize>().unwrap();
 
-                let mut player = PLAYER.lock().unwrap();
-
-                let res = player.equip(index - 1, "boots");
-
-                if res == "" {
-                    println!(
-                        "Equipped {} in boots",
-                        player
-                            .get_inventory()
-                            .get_boots()
-                            .as_ref()
-                            .unwrap()
-                            .get_material()
-                    );
-                    drop(player);
-                    thread::sleep(Duration::from_secs(1));
-                    clear_screen();
-                    print_inventory();
-                } else {
-                    println!("{}", res);
-                }
+                equip(index as i32, "boots")
             }
             "info" | "i" => {
                 if tokens.len() != 2 {

@@ -28,7 +28,6 @@ pub enum Material {
     WoodenDagger,
     WoodenSword,
     WoodenShield,
-    BronzeAxe,
     LeatherGloves,
     // IronAxe,
     // SteelAxe,
@@ -50,7 +49,6 @@ impl Material {
             Material::WoodenDagger => "Wooden Dagger".to_string(),
             Material::WoodenSword => "Wooden Sword".to_string(),
             Material::WoodenShield => "Wooden Shield".to_string(),
-            Material::BronzeAxe => "Bronze Axe".to_string(),
             Material::LeatherGloves => "Leather Gloves".to_string(),
             Material::TreeSpiritRemains => "Tree Spirit Remains".to_string(),
         }
@@ -66,7 +64,6 @@ impl Material {
             Material::WoodenDagger => MaterialType::Weapon,
             Material::WoodenSword => MaterialType::Weapon,
             Material::WoodenShield => MaterialType::Weapon,
-            Material::BronzeAxe => MaterialType::Axe,
             Material::LeatherGloves => MaterialType::Gloves,
             Material::TreeSpiritRemains => MaterialType::Log,
         }
@@ -82,7 +79,6 @@ impl Material {
             Material::WoodenDagger => 50,
             Material::WoodenSword => 75,
             Material::WoodenShield => 75,
-            Material::BronzeAxe => 250,
             Material::LeatherGloves => 100,
             Material::TreeSpiritRemains => 200,
         }
@@ -90,7 +86,6 @@ impl Material {
 
     pub fn get_required_level_equip(&self) -> (&str, u64) {
         match self {
-            Material::BronzeAxe => ("woodcutting", 100),
             _ => ("melee", 1),
         }
     }
@@ -121,16 +116,12 @@ impl Material {
             Material::WoodenShield => {
                 println!("Wooden shield is a basic wooden weapon used to protect against monsters.\nWhen equipped:\n\tDefense: +1")
             }
-            Material::BronzeAxe => {
-                println!("Bronze axe is a slightly better tool used to gather logs from trees.\nWhen equipped:\n\tWoodcutting: +3\n\tAttack: +1")
-            }
             Material::LeatherGloves => {
                 println!("Leather gloves can be worn on the hands to firemake.\nWhen equipped:\n\tDefense: +1");
             }
             Material::TreeSpiritRemains => {
                 println!("Tree Spirit Remains are gathered from Tree Spirits and can be used in firemaking.")
             }
-            _ => println!("No description"),
         }
     }
 }
@@ -156,7 +147,6 @@ impl FromStr for Material {
             "WoodenDagger" => Ok(Material::WoodenDagger),
             "WoodenSword" => Ok(Material::WoodenSword),
             "WoodenShield" => Ok(Material::WoodenShield),
-            "BronzeAxe" => Ok(Material::BronzeAxe),
             "LeatherGloves" => Ok(Material::LeatherGloves),
             "TreeSpiritRemains" => Ok(Material::TreeSpiritRemains),
             _ => Err(()),

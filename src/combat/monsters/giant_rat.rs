@@ -25,31 +25,31 @@ impl MonsterData for GiantRat {
     }
 
     fn get_melee(&self) -> u64 {
-        3
+        5
     }
 
     fn get_ranged(&self) -> u64 {
-        3
+        1
     }
 
     fn get_magic(&self) -> u64 {
-        3
+        1
     }
 
     fn get_hitpoints(&self) -> u64 {
-        3
+        5
     }
 
     fn get_defense(&self) -> u64 {
-        3
+        5
     }
 
     fn get_drops(&self) -> Vec<(Material, u32, u32, f32)> {
         vec![
             (Material::Log, 1, 1, 0.25),
-            (Material::OakLog, 1, 1, 0.25),
-            (Material::WoodenSword, 1, 1, 0.25),
-            (Material::WoodenShield, 1, 1, 0.25),
+            (Material::OakLog, 1, 1, 0.15),
+            (Material::WoodenSword, 1, 1, 0.1),
+            (Material::WoodenShield, 1, 1, 0.1),
         ]
     }
 

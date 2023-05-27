@@ -147,7 +147,6 @@ impl Material {
     pub fn get_axe_bonus(&self) -> u32 {
         match self {
             Material::WoodenAxe => 1,
-            Material::BronzeAxe => 2,
             _ => 0,
         }
     }
