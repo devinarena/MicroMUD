@@ -1,17 +1,35 @@
 use rand::random;
 
 use crate::{
-    item::{Material},
+    combat::{ability::Ability, FightState},
+    item::Material,
     player::Player,
 };
 
 use super::MonsterData;
 
-pub struct GiantRat {}
+pub struct GiantRat {
+    abilities: Vec<Ability>,
+    ability_chances: Vec<f32>,
+}
 
 impl GiantRat {
     pub fn new() -> GiantRat {
-        GiantRat {}
+        GiantRat {
+            abilities: vec![Ability::new(
+                "Tail Whip".to_string(),
+                String::new(),
+                "melee".to_string(),
+                1,
+                0.5,
+                |state| {
+                    state.monster_adrenaline -= 0.5;
+                    state.health -= 20;
+                    println!("The rat whips you with its tail, dealing 20 damage!");
+                },
+            )],
+            ability_chances: vec![0.5],
+        }
     }
 }
 
@@ -25,23 +43,23 @@ impl MonsterData for GiantRat {
     }
 
     fn get_melee(&self) -> u64 {
-        5
+        3
     }
 
     fn get_ranged(&self) -> u64 {
-        1
+        3
     }
 
     fn get_magic(&self) -> u64 {
-        1
+        3
     }
 
     fn get_hitpoints(&self) -> u64 {
-        5
+        3
     }
 
     fn get_defense(&self) -> u64 {
-        5
+        3
     }
 
     fn get_drops(&self) -> Vec<(Material, u32, u32, f32)> {
@@ -63,5 +81,16 @@ impl MonsterData for GiantRat {
 
     fn can_fight(&self, _player: &Player) -> String {
         "".to_string()
+    }
+
+    fn choose_ability(&self, state: &mut FightState) -> bool {
+        for _ in 0..self.abilities.len() {
+            let index = random::<usize>() % self.abilities.len();
+            if random::<f32>() <= self.ability_chances[index] {
+                (self.abilities[index].activate)(state);
+                return true;
+            }
+        }
+        false
     }
 }

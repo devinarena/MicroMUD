@@ -1,5 +1,8 @@
 use crate::{item::{Item, Material}, player::Player};
 
+use super::FightState;
+
+pub mod slime;
 pub mod rat;
 pub mod giant_rat;
 pub mod tree_spirit;
@@ -15,4 +18,5 @@ pub trait MonsterData {
     fn get_gold(&self) -> u64;
     fn get_reqs(&self) -> String;
     fn can_fight(&self, player: &Player) -> String;
+    fn choose_ability(&self, state: &mut FightState) -> bool;
 }

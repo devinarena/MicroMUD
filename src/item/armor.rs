@@ -12,6 +12,10 @@ impl Material {
         match self {
             Material::LeatherGloves => 1,
             Material::WoodenShield => 1,
+            Material::WoodenHelmet => 1,
+            Material::WoodenChestplate => 2,
+            Material::WoodenLeggings => 1,
+            Material::WoodenBoots => 1,
             _ => 0,
         }
     }

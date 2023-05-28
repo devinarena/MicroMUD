@@ -1,17 +1,51 @@
 use rand::random;
 
 use crate::{
+    combat::{ability::Ability, max_hit_comp, FightState},
     item::{Item, Material},
     player::Player,
 };
 
 use super::MonsterData;
 
-pub struct TreeSpirit {}
+pub struct TreeSpirit {
+    abilities: Vec<Ability>,
+    ability_chances: Vec<f32>,
+}
 
 impl TreeSpirit {
     pub fn new() -> TreeSpirit {
-        TreeSpirit {}
+        TreeSpirit {
+            abilities: vec![Ability::new(
+                "Branch Smash".to_string(),
+                String::new(),
+                "melee".to_string(),
+                1,
+                0.25,
+                |state| {
+                    state.monster_adrenaline -= 0.25;
+                    let max_hit =
+                        max_hit_comp(state.monster_attack + 5, state.player.get_defense_bonus());
+                    let damage = (max_hit as f32 * random::<f32>()) as i32;
+                    if random::<f32>() < state.pl_crit_chance {
+                        state.monster_health -= damage * 2;
+                        println!(
+                            "The {} smashes you with its branch, critically dealing {} damage!",
+                            state.monster.get_name(),
+                            damage * 2
+                        );
+                    } else {
+                        state.monster_health -= damage;
+                        println!(
+                            "The {} smashes you with its branch, dealing {} damage!",
+                            state.monster.get_name(),
+                            damage
+                        );
+                    }
+                },
+            )],
+            ability_chances: vec![0.25],
+        }
     }
 }
 
@@ -67,5 +101,16 @@ impl MonsterData for TreeSpirit {
         } else {
             "".to_string()
         }
+    }
+
+    fn choose_ability(&self, state: &mut FightState) -> bool {
+        for _ in 0..self.abilities.len() {
+            let index = random::<usize>() % self.abilities.len();
+            if random::<f32>() <= self.ability_chances[index] {
+                (self.abilities[index].activate)(state);
+                return true;
+            }
+        }
+        false
     }
 }

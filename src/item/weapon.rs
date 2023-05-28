@@ -11,17 +11,6 @@ impl Material {
         }
     }
 
-    pub fn get_slot(&self) -> &str {
-        match self {
-            Material::WoodenDagger => &"main_hand",
-            Material::WoodenAxe => &"main_hand",
-            Material::WoodenSword => &"main_hand",
-            Material::WoodenShield => &"off_hand",
-            Material::LeatherGloves => &"main_hand",
-            _ => &"none",
-        }
-    }
-
     pub fn get_combat_style(&self) -> &str {
         match self {
             Material::WoodenDagger => &"melee",

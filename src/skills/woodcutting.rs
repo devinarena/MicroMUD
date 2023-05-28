@@ -116,12 +116,18 @@ pub fn woodcutting_menu() {
         println!("Which tree would you like to cut?");
         let mut i = 1;
         for tree in trees.iter() {
-            println!(
-                "{}. {} (req lv: {})",
-                i,
-                tree.get_name(),
-                tree.get_required_level()
-            );
+            if PLAYER.lock().unwrap().get_level(&"woodcutting".to_string())
+                < tree.get_required_level()
+            {
+                println!(
+                    "{}. {} (req lv: {})",
+                    i,
+                    tree.get_name(),
+                    tree.get_required_level()
+                );
+            } else {
+                println!("{}. {}", i, tree.get_name());
+            }
             i += 1;
         }
         println!("{}. Main Menu", i);

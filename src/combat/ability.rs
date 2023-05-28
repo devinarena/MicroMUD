@@ -1,26 +1,12 @@
-use crate::player::Player;
-
-use super::monsters::MonsterData;
+use super::{FightState};
 
 pub struct Ability {
     name: String,
     description: String,
     combat_style: String,
-    level: usize,
+    level: u64,
     cost: f32,
-    pub activate: fn(
-        pl: &mut Player,
-        health: &mut i32,
-        max_health: i32,
-        adrenaline: f32,
-        monster: &Box<dyn MonsterData>,
-        ehealth: &mut i32,
-        emax_health: i32,
-        elevel: u64,
-        eattack: u64,
-        ecrit_chance: f32,
-        eadrenaline: f32,
-    ),
+    pub activate: fn(state: &mut FightState),
 }
 
 impl Ability {
@@ -28,21 +14,9 @@ impl Ability {
         name: String,
         description: String,
         combat_style: String,
-        level: usize,
+        level: u64,
         cost: f32,
-        activate: fn(
-            pl: &mut Player,
-            health: &mut i32,
-            max_health: i32,
-            adrenaline: f32,
-            monster: &Box<dyn MonsterData>,
-            ehealth: &mut i32,
-            emax_health: i32,
-            elevel: u64,
-            eattack: u64,
-            ecrit_chance: f32,
-            eadrenaline: f32,
-        ),
+        activate: fn(state: &mut FightState),
     ) -> Self {
         Self {
             name,
@@ -66,7 +40,7 @@ impl Ability {
         &self.combat_style
     }
 
-    pub fn get_level(&self) -> usize {
+    pub fn get_level(&self) -> u64 {
         self.level
     }
 

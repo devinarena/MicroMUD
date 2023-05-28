@@ -1,5 +1,3 @@
-use std::{collections::HashMap, iter::Map};
-
 use rand::random;
 
 use crate::{
@@ -10,27 +8,38 @@ use crate::{
 
 use super::MonsterData;
 
-pub struct Rat {
+pub struct Slime {
     abilities: Vec<Ability>,
     ability_chances: Vec<f32>,
 }
 
-impl Rat {
-    pub fn new() -> Rat {
-        Rat {
-            abilities: vec![],
-            ability_chances: vec![],
+impl Slime {
+    pub fn new() -> Slime {
+        Slime {
+            abilities: vec![Ability::new(
+                "Jiggle".to_string(),
+                String::new(),
+                "melee".to_string(),
+                1,
+                0.45,
+                |state| {
+                    state.monster_adrenaline -= 0.45;
+                    state.monster_health += 10;
+                    println!("The slime jiggles, recovering 10 health.");
+                },
+            )],
+            ability_chances: vec![1.0],
         }
     }
 }
 
-impl MonsterData for Rat {
+impl MonsterData for Slime {
     fn get_name(&self) -> String {
-        "Rat".to_string()
+        "Slime".to_string()
     }
 
     fn get_attack_style(&self) -> String {
-        "melee".to_string()
+        "magic".to_string()
     }
 
     fn get_melee(&self) -> u64 {
@@ -42,11 +51,11 @@ impl MonsterData for Rat {
     }
 
     fn get_magic(&self) -> u64 {
-        1
+        2
     }
 
     fn get_hitpoints(&self) -> u64 {
-        1
+        2
     }
 
     fn get_defense(&self) -> u64 {
@@ -55,8 +64,8 @@ impl MonsterData for Rat {
 
     fn get_drops(&self) -> Vec<(Material, u32, u32, f32)> {
         vec![
-            (Material::Log, 1, 1, 0.2),
-            (Material::WoodenBoots, 1, 1, 0.1),
+            (Material::WoodenLeggings, 1, 1, 0.25),
+            (Material::WoodenAxe, 1, 1, 0.25),
             (Material::Apple, 1, 1, 0.1),
         ]
     }

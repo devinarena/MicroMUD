@@ -1,11 +1,12 @@
 use std::{collections::HashMap, fmt::Display};
 
+use rand::random;
 use serde_json::{json, Value};
 
 use crate::{
-    combat::ability::Ability,
+    combat::{ability::Ability, max_hit_comp, FightState},
     inventory::Inventory,
-    item::{Item, Material},
+    item::{Item, Material, MaterialType},
 };
 
 #[derive(Clone, PartialEq)]
@@ -63,12 +64,14 @@ impl Player {
         player.xp.insert("fishing".to_string(), 0);
         player.xp.insert("cooking".to_string(), 0);
         player.xp.insert("farming".to_string(), 0);
+        
+        player.register_abilities();
 
         return player;
     }
 
     pub fn empty() -> Player {
-        Player {
+        let mut player = Player {
             name: "".to_string(),
             xp: HashMap::new(),
             inventory: Inventory::new(),
@@ -76,7 +79,9 @@ impl Player {
             health: 0,
             location: "".to_string(),
             abilities: vec![],
-        }
+        };
+        player.register_abilities();
+        return player;
     }
 
     pub fn deserialize(json: &Value) -> Player {
@@ -320,14 +325,40 @@ impl Player {
         let mat = item.get_material();
         let req = mat.get_required_level_equip();
 
-        if mat.get_slot() == "none" {
-            return format!("You cannot equip {}.", mat.get_name());
-        } else if mat.get_slot() != slot {
-            return format!(
-                "{} must be equipped in your {}.",
-                mat.get_name(),
-                mat.get_slot()
-            );
+        match mat.get_type() {
+            MaterialType::Helmet => {
+                if slot != "helmet" {
+                    return format!("You cannot equip {} in the {} slot.", mat.get_name(), slot);
+                }
+            }
+            MaterialType::Chestplate => {
+                if slot != "chestplate" {
+                    return format!("You cannot equip {} in the {} slot.", mat.get_name(), slot);
+                }
+            }
+            MaterialType::Leggings => {
+                if slot != "leggings" {
+                    return format!("You cannot equip {} in the {} slot.", mat.get_name(), slot);
+                }
+            }
+            MaterialType::Boots => {
+                if slot != "boots" {
+                    return format!("You cannot equip {} in the {} slot.", mat.get_name(), slot);
+                }
+            }
+            MaterialType::Weapon => {
+                if slot != "main_hand" {
+                    return format!("You cannot equip {} in the {} slot.", mat.get_name(), slot);
+                }
+            }
+            MaterialType::Shield => {
+                if slot != "off_hand" {
+                    return format!("You cannot equip {} in the {} slot.", mat.get_name(), slot);
+                }
+            }
+            _ => {
+                return format!("You cannot equip {}.", mat.get_name());
+            }
         }
 
         if self.get_level(&req.0.to_string()) < req.1 {
@@ -364,23 +395,6 @@ impl Player {
         String::new()
     }
 
-    pub fn register_abilities(&mut self) {
-        self.abilities.push(Ability::new(
-            "Backhand".to_string(),
-            "Forcefully backhand your opponent, dealing a guaranteed 15 melee damage.".to_string(),
-            "melee".to_string(),
-            1,
-            0.1,
-            |_, _, _, _, monster, ehealth, _, _, _, _, _| -> () {
-                *ehealth -= 15;
-                println!(
-                    "Your backhand deals 15 damage to {}!",
-                    monster.get_name()
-                );
-            }            
-        ))
-    }
-
     pub fn print_stats(&self) {
         println!("Name: {}", self.name);
         println!("  Location: {}", self.location);
@@ -396,5 +410,48 @@ impl Player {
                 self.needed_xp(skill)
             );
         }
+    }
+
+    pub fn register_abilities(&mut self) {
+        self.abilities.push(Ability::new(
+            "Backhand".to_string(),
+            "Forcefully backhand your opponent, dealing a guaranteed 15 melee damage.".to_string(),
+            "melee".to_string(),
+            1,
+            0.1,
+            |state: &mut FightState| -> () {
+                state.monster_health -= 15;
+                println!(
+                    "Your backhand deals 15 damage to {}!",
+                    state.monster.get_name()
+                );
+            },
+        ));
+        self.abilities.push(Ability::new(
+            "Scroll of the Ancient Samurai".to_string(),
+            "Unleash all of your adrenaline as a fury of supercharged slashes, dealing up to 400% of your max hit.".to_string(),
+            "melee".to_string(),
+            1,
+            1.0,
+            |state|
+             -> () {                let max_hit = max_hit_comp(state.player.get_attack_bonus(), state.monster.get_defense()) * 4;
+                let damage = (max_hit as f32 * random::<f32>()) as i32;
+                if random::<f32>() < state.pl_crit_chance {
+                    state.monster_health -= damage * 2;
+                    println!(
+                        "Your Scroll of the Ancient Samurai critically hits the {} for {} damage.",
+                        state.monster.get_name(),
+                        damage * 2
+                    );
+                } else {
+                    state.monster_health -= damage;
+                    println!(
+                        "Your Scroll of the Ancient Samurai hits the {} for {} damage.",
+                        state.monster.get_name(),
+                        damage
+                    );
+                }
+            },
+        ));
     }
 }

@@ -13,6 +13,11 @@ pub enum MaterialType {
     Food,
     Axe,
     Weapon,
+    Shield,
+    Helmet,
+    Chestplate,
+    Leggings,
+    Boots,
     Gloves,
 }
 
@@ -28,12 +33,16 @@ pub enum Material {
     WoodenDagger,
     WoodenSword,
     WoodenShield,
+    WoodenHelmet,
+    WoodenChestplate,
+    WoodenLeggings,
+    WoodenBoots,
     LeatherGloves,
     // IronAxe,
     // SteelAxe,
     // GoldenAxe,
-    // DiamondAxe,
-    // DragonAxe,
+    // CrystalAxe,
+    // EnchantedAxe,
     // Monsters
     TreeSpiritRemains,
 }
@@ -49,6 +58,10 @@ impl Material {
             Material::WoodenDagger => "Wooden Dagger".to_string(),
             Material::WoodenSword => "Wooden Sword".to_string(),
             Material::WoodenShield => "Wooden Shield".to_string(),
+            Material::WoodenHelmet => "Wooden Helmet".to_string(),
+            Material::WoodenChestplate => "Wooden Chestplate".to_string(),
+            Material::WoodenLeggings => "Wooden Leggings".to_string(),
+            Material::WoodenBoots => "Wooden Boots".to_string(),
             Material::LeatherGloves => "Leather Gloves".to_string(),
             Material::TreeSpiritRemains => "Tree Spirit Remains".to_string(),
         }
@@ -63,7 +76,11 @@ impl Material {
             Material::WoodenAxe => MaterialType::Axe,
             Material::WoodenDagger => MaterialType::Weapon,
             Material::WoodenSword => MaterialType::Weapon,
-            Material::WoodenShield => MaterialType::Weapon,
+            Material::WoodenShield => MaterialType::Shield,
+            Material::WoodenHelmet => MaterialType::Helmet,
+            Material::WoodenChestplate => MaterialType::Chestplate,
+            Material::WoodenLeggings => MaterialType::Leggings,
+            Material::WoodenBoots => MaterialType::Boots,
             Material::LeatherGloves => MaterialType::Gloves,
             Material::TreeSpiritRemains => MaterialType::Log,
         }
@@ -79,6 +96,10 @@ impl Material {
             Material::WoodenDagger => 50,
             Material::WoodenSword => 75,
             Material::WoodenShield => 75,
+            Material::WoodenHelmet => 100,
+            Material::WoodenChestplate => 150,
+            Material::WoodenLeggings => 125,
+            Material::WoodenBoots => 100,
             Material::LeatherGloves => 100,
             Material::TreeSpiritRemains => 200,
         }
@@ -116,6 +137,18 @@ impl Material {
             Material::WoodenShield => {
                 println!("Wooden shield is a basic wooden weapon used to protect against monsters.\nWhen equipped:\n\tDefense: +1")
             }
+            Material::WoodenHelmet => {
+                println!("Wooden helmet is a basic wooden armor used to protect against monsters.\nWhen equipped:\n\tDefense: +1")
+            }
+            Material::WoodenChestplate => {
+                println!("Wooden chestplate is a basic wooden armor used to protect against monsters.\nWhen equipped:\n\tDefense: +2")
+            }
+            Material::WoodenLeggings => {
+                println!("Wooden leggings are a basic wooden armor used to protect against monsters.\nWhen equipped:\n\tDefense: +1")
+            }
+            Material::WoodenBoots => {
+                println!("Wooden boots are a basic wooden armor used to protect against monsters.\nWhen equipped:\n\tDefense: +1")
+            }
             Material::LeatherGloves => {
                 println!("Leather gloves can be worn on the hands to firemake.\nWhen equipped:\n\tDefense: +1");
             }
@@ -147,6 +180,10 @@ impl FromStr for Material {
             "WoodenDagger" => Ok(Material::WoodenDagger),
             "WoodenSword" => Ok(Material::WoodenSword),
             "WoodenShield" => Ok(Material::WoodenShield),
+            "WoodenHelmet" => Ok(Material::WoodenHelmet),
+            "WoodenChestplate" => Ok(Material::WoodenChestplate),
+            "WoodenLeggings" => Ok(Material::WoodenLeggings),
+            "WoodenBoots" => Ok(Material::WoodenBoots),
             "LeatherGloves" => Ok(Material::LeatherGloves),
             "TreeSpiritRemains" => Ok(Material::TreeSpiritRemains),
             _ => Err(()),
