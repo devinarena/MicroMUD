@@ -1,20 +1,17 @@
-use std::{sync::MutexGuard, thread, time::Duration};
+use std::{thread, time::Duration};
 
 use rand::random;
 use text_io::read;
 
 use crate::{
-    combat::{
-        ability::Ability,
-        monsters::{rat::Rat, tree_spirit::TreeSpirit},
-    },
-    game::{ACTION, PLAYER},
+    combat::monsters::{rat::Rat, tree_spirit::TreeSpirit},
+    game::{self, ACTION, PLAYER},
     io_manager::clear_screen,
-    item::Item,
+    item::{Item, Material},
     player::{Action, Player},
 };
 
-use self::monsters::{giant_rat::GiantRat, MonsterData, slime::Slime};
+use self::monsters::{giant_rat::GiantRat, slime::Slime, MonsterData};
 
 pub mod ability;
 pub mod monsters;
@@ -25,6 +22,7 @@ pub struct FightState<'a> {
     pub health: i32,
     pub max_health: i32,
     pub adrenaline: f32,
+    pub combat_style: &'a str,
     pub pl_crit_chance: f32,
     pub monster: &'a Box<dyn MonsterData>,
     pub monster_level: u64,
@@ -60,34 +58,46 @@ fn print_status(state: &mut FightState) {
 
 fn player_attack(state: &mut FightState) {
     // roll for damage
-    let max_hit = max_hit_comp(state.player.get_attack_bonus(), state.monster.get_defense());
+    let max_hit = max_hit_comp(
+        state.player.get_bonus(&state.combat_style.to_string()),
+        state.monster.get_defense(),
+    );
     let damage = (max_hit as f32 * random::<f32>()) as i32;
     if random::<f32>() < state.pl_crit_chance {
         state.monster_health -= damage * 2;
         println!(
-            "You critically hit the {} for {} melee damage.",
+            "You critically hit the {} for {} {} damage.",
             state.monster.get_name(),
-            damage * 2
+            damage * 2,
+            state.combat_style
         );
     } else {
         state.monster_health -= damage;
         println!(
-            "You hit the {} for {} melee damage.",
+            "You hit the {} for {} {} damage.",
             state.monster.get_name(),
-            damage
+            damage,
+            state.combat_style
         );
     }
 
     // add adrenaline
     let mut adr = (damage as f32 / max_hit as f32) / 10.0;
-    adr *= 2.0f32.powf(state.health as f32 / state.max_health as f32);
+    adr *= 2.0f32.powf(1.0 - state.health as f32 / state.max_health as f32);
     state.adrenaline += adr;
     state.adrenaline = state.adrenaline.min(1.0);
 }
 
 fn enemy_attack(state: &mut FightState) {
+    if state.monster.choose_ability(state) {
+        return;
+    }
+
     // roll for damage
-    let max_hit = max_hit_comp(state.monster_attack, state.player.get_defense_bonus());
+    let max_hit = max_hit_comp(
+        state.monster_attack,
+        state.player.get_bonus(&"defense".to_string()),
+    );
     let dmg = (max_hit as f32 * random::<f32>()) as i32;
     if random::<f32>() < state.monster_crit_chance {
         state.health -= dmg * 2;
@@ -109,7 +119,7 @@ fn enemy_attack(state: &mut FightState) {
 
     // add adrenaline
     let mut adr = (dmg as f32 / max_hit as f32) / 10.0;
-    adr *= 2.0f32.powf(state.monster_health as f32 / state.monster_max_health as f32);
+    adr *= 2.0f32.powf(1.0 - state.monster_health as f32 / state.monster_max_health as f32);
     state.monster_adrenaline += adr;
     state.monster_adrenaline = state.monster_adrenaline.min(1.0);
 }
@@ -117,7 +127,9 @@ fn enemy_attack(state: &mut FightState) {
 fn eat_menu(state: &mut FightState) {
     if state.player.get_inventory().get_items().len() == 0 {
         println!("You have no items to use.");
-        thread::sleep(Duration::from_secs(2));
+        thread::sleep(Duration::from_millis(
+            (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+        ));
         return;
     }
     let mut input: usize = 1;
@@ -158,7 +170,9 @@ fn eat_menu(state: &mut FightState) {
                 "Invalid input. Please enter a number between 1 and {}.",
                 index
             );
-            thread::sleep(Duration::from_secs(2));
+            thread::sleep(Duration::from_millis(
+                (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+            ));
             continue;
         }
 
@@ -166,7 +180,9 @@ fn eat_menu(state: &mut FightState) {
 
         if item.0.get_material().get_food_heal() == 0 {
             println!("You cannot eat that item.");
-            thread::sleep(Duration::from_secs(2));
+            thread::sleep(Duration::from_millis(
+                (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+            ));
             continue;
         } else {
             let heal = item.0.get_material().get_food_heal() as i32;
@@ -177,30 +193,37 @@ fn eat_menu(state: &mut FightState) {
                 item.0.get_material().get_name(),
                 heal
             );
-            thread::sleep(Duration::from_secs(1));
+            thread::sleep(Duration::from_millis(
+                (1000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+            ));
 
             enemy_attack(state);
 
-            thread::sleep(Duration::from_secs(2));
+            thread::sleep(Duration::from_millis(
+                (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+            ));
             break;
         }
     }
 }
 
 fn ability_menu(state: &mut FightState) {
-    let mut input: usize = 0;
+    let mut input: usize = 1;
 
-    while input < 1 || input > state.player.get_abilities().len() + 1 {
+    while input != 0 {
         clear_screen();
 
         print_status(state);
 
         println!("\nWhat ability would you like to use?");
         let mut index = 1;
-        let abilities = state.player.get_abilities();
+        let mut abilities = Vec::new();
 
         // print ability list
-        for ability in abilities.iter() {
+        for ability in state.player.get_abilities().iter() {
+            if state.combat_style != ability.get_combat_style() {
+                continue;
+            }
             if state.player.get_level(ability.get_combat_style()) < ability.get_level() {
                 println!(
                     "{}. {} ({:.2}% adrenaline) - {} - (requires lv. {} {})",
@@ -222,6 +245,7 @@ fn ability_menu(state: &mut FightState) {
                 );
             }
             index += 1;
+            abilities.push(ability)
         }
         println!("{}. Cancel", index);
 
@@ -234,7 +258,9 @@ fn ability_menu(state: &mut FightState) {
                 "Invalid input. Please enter a number between 1 and {}.",
                 index
             );
-            thread::sleep(Duration::from_secs(2));
+            thread::sleep(Duration::from_millis(
+                (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+            ));
             continue;
         }
 
@@ -242,11 +268,13 @@ fn ability_menu(state: &mut FightState) {
             break;
         }
 
-        let ability = &abilities[input - 1];
+        let ability = abilities[input - 1];
 
         if state.adrenaline < ability.get_cost() {
             println!("You do not have enough adrenaline to use that ability.");
-            thread::sleep(Duration::from_secs(2));
+            thread::sleep(Duration::from_millis(
+                (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+            ));
             continue;
         }
 
@@ -254,16 +282,15 @@ fn ability_menu(state: &mut FightState) {
 
         (ability.activate)(state);
 
-        thread::sleep(Duration::from_secs(2));
-
-        if state.monster.choose_ability(state) {
-            thread::sleep(Duration::from_secs(2));
-            break;
-        }
+        thread::sleep(Duration::from_millis(
+            (1000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+        ));
 
         enemy_attack(state);
 
-        thread::sleep(Duration::from_secs(2));
+        thread::sleep(Duration::from_millis(
+            (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+        ));
 
         break;
     }
@@ -276,19 +303,25 @@ fn fight(monster: &Box<dyn MonsterData>) {
     let can_fight: String = monster.can_fight(&player);
     if can_fight != "" {
         println!("{}", can_fight);
-        thread::sleep(Duration::from_secs(3));
+        thread::sleep(Duration::from_millis(
+            (3000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+        ));
         return;
     }
 
     let health: i32 = player.get_health();
     let max_health: i32 = (player.get_level(&"hitpoints".to_string()) * 100) as i32;
+    let pl_crit_chance: f32 = 0.15;
+    let mut combat_style: &str = "melee";
+    if let Some(item) = player.get_inventory().get_main_hand() {
+        let mat: Material = item.get_material();
+        combat_style = mat.get_combat_style();
+    }
     let adrenaline = 0.0;
 
     let monster_health: i32 = (monster.get_hitpoints() * 100) as i32;
     let monster_max_health: i32 = monster_health;
     let monster_adrenaline: f32 = 0.0;
-
-    let pl_crit_chance: f32 = 0.15;
 
     let monster_level: u64 = ((monster.get_melee()
         + monster.get_magic()
@@ -309,6 +342,7 @@ fn fight(monster: &Box<dyn MonsterData>) {
         health: health,
         max_health: max_health,
         adrenaline: adrenaline,
+        combat_style: combat_style,
         pl_crit_chance: pl_crit_chance,
         monster: monster,
         monster_health: monster_health,
@@ -330,8 +364,7 @@ fn fight(monster: &Box<dyn MonsterData>) {
         println!("1. Attack");
         println!("2. Ability");
         println!("3. Item");
-        println!("4. Magic");
-        println!("5. Run");
+        println!("4. Run");
 
         print!("> ");
 
@@ -347,11 +380,15 @@ fn fight(monster: &Box<dyn MonsterData>) {
             1 => {
                 player_attack(state);
 
-                thread::sleep(Duration::from_secs(1));
+                thread::sleep(Duration::from_millis(
+                    (1000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+                ));
 
                 enemy_attack(state);
 
-                thread::sleep(Duration::from_secs(2));
+                thread::sleep(Duration::from_millis(
+                    (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+                ));
             }
             2 => {
                 ability_menu(state);
@@ -360,17 +397,15 @@ fn fight(monster: &Box<dyn MonsterData>) {
                 eat_menu(state);
             }
             4 => {
-                println!("You don't know any magic spells.");
-                thread::sleep(Duration::from_secs(2));
-            }
-            5 => {
                 println!("You run away humiliated but alive.");
-                thread::sleep(Duration::from_secs(3));
+                thread::sleep(Duration::from_millis(
+                    (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+                ));
                 *ACTION.lock().unwrap() = Action::IDLE;
                 return;
             }
             _ => {
-                println!("Invalid input. Please enter a number between 1 and 3.");
+                println!("Invalid input. Please enter a number between 1 and 4.");
             }
         }
     }
@@ -380,21 +415,28 @@ fn fight(monster: &Box<dyn MonsterData>) {
     } else if state.monster_health <= 0 {
         println!("You killed the {}!", monster.get_name());
 
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(Duration::from_millis(
+            (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+        ));
 
         let xp = (state.monster_level as u64) * 15;
         let hp_xp = state.monster.get_hitpoints() as u64 * 20;
         let defense_xp = (state.max_health - state.health) as u64 / 3;
-        state.player.add_xp(&"melee".to_string(), xp);
+        state.player.add_xp(&combat_style.to_string(), xp);
         state.player.add_xp(&"hitpoints".to_string(), hp_xp);
         state.player.add_xp(&"defense".to_string(), defense_xp);
 
         println!(
-            "You gained {} melee xp, {} defense xp, and {} hitpoints xp.",
-            xp, defense_xp, hp_xp
+            "You gained {} {} xp, {} defense xp, and {} hitpoints xp.",
+            xp,
+            combat_style.to_string(),
+            defense_xp,
+            hp_xp
         );
 
-        thread::sleep(Duration::from_secs(2));
+        thread::sleep(Duration::from_millis(
+            (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+        ));
 
         let gold = state.monster.get_gold();
 
@@ -420,14 +462,18 @@ fn fight(monster: &Box<dyn MonsterData>) {
             }
         }
 
-        thread::sleep(Duration::from_secs(3));
+        thread::sleep(Duration::from_millis(
+            (3000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+        ));
     } else {
         println!("You ran away from the {}!", state.monster.get_name());
     }
 
     *ACTION.lock().unwrap() = Action::IDLE;
 
-    thread::sleep(std::time::Duration::from_secs(3));
+    thread::sleep(Duration::from_millis(
+        (3000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+    ));
 }
 
 fn print_combat_stats() {

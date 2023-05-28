@@ -1,4 +1,4 @@
-use crate::{item::{Item, Material}, player::Player};
+use crate::{item::{Material}, player::Player};
 
 use super::FightState;
 

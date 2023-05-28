@@ -3,7 +3,7 @@ use std::{thread, time::Duration};
 use text_io::read;
 
 use crate::{
-    game::{ACTION, PLAYER},
+    game::{ACTION, PLAYER, self},
     io_manager::clear_screen,
     item::{Material, MaterialType},
     player::Action,
@@ -25,7 +25,9 @@ pub fn firemake(material: Material) {
             material.get_firemaking_level(),
             material.get_name()
         );
-        thread::sleep(Duration::new(3, 0));
+        thread::sleep(Duration::from_millis(
+            (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+        ));
         return;
     }
 
@@ -39,7 +41,9 @@ pub fn firemake(material: Material) {
 
     if index.is_none() {
         println!("You don't have any {} to burn!", material.get_name());
-        thread::sleep(Duration::new(3, 0));
+        thread::sleep(Duration::from_millis(
+            (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+        ));
         return;
     }
 
@@ -48,7 +52,9 @@ pub fn firemake(material: Material) {
     let mh = pl.get_inventory().get_main_hand();
     if mh.is_none() || mh.as_ref().unwrap().get_material().get_type() != MaterialType::Gloves {
         println!("You would burn yourself without a pair of gloves.");
-        thread::sleep(Duration::new(3, 0));
+        thread::sleep(Duration::from_millis(
+            (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+        ));
         return;
     }
 
@@ -69,7 +75,9 @@ pub fn firemake(material: Material) {
 
         if quantity == 1 {
             println!("You have run out of {} to burn!", material.get_name());
-            thread::sleep(Duration::new(3, 0));
+            thread::sleep(Duration::from_millis(
+                (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+            ));
             *ACTION.lock().unwrap() = Action::IDLE;
         }
 
@@ -77,18 +85,21 @@ pub fn firemake(material: Material) {
     }
 
     println!("You stop firemaking.");
-    thread::sleep(Duration::new(3, 0));
+    thread::sleep(Duration::from_millis(
+        (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+    ));
 }
 
 pub fn firemaking_menu() {
     let mut input: u32 = 0;
 
-    let burnable = vec![
-        Material::Log,
-        Material::OakLog,
-        Material::BirchLog,
-        Material::TreeSpiritRemains,
-    ];
+    let mut burnable: Vec<Material> = vec![];
+
+    for item in PLAYER.lock().unwrap().get_inventory().get_items() {
+        if item.get_material().get_type() == MaterialType::Log {
+            burnable.push(item.get_material());
+        }
+    }
 
     while input as usize != burnable.len() + 1 {
         clear_screen();

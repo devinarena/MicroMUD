@@ -1,12 +1,13 @@
 use std::{
-    thread::{self, Thread},
-    time::Duration, io::{self, Write},
+    io::{self, Write},
+    thread::{self},
+    time::Duration,
 };
 
 use text_io::read;
 
 use crate::{
-    game::{game_loop, give_starter_items, ACTION, LOADED, PLAYER},
+    game::{game_loop, give_starter_items, ACTION, LOADED, PLAYER, self},
     io_manager::{clear_screen, get_all_saves, read_player_save, write_player_save},
     player::{Action, Player},
 };
@@ -91,8 +92,9 @@ pub fn main_menu() {
 
             println!("Welcome to the game! The first step is to create a character!");
 
-            thread::sleep(Duration::from_secs(2));
-
+            thread::sleep(Duration::from_millis(
+                (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+            ));
             create_character_menu();
 
             println!();

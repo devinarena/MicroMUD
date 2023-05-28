@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display, thread, time::Duration};
 
 use rand::random;
 use serde_json::{json, Value};
@@ -6,7 +6,7 @@ use serde_json::{json, Value};
 use crate::{
     combat::{ability::Ability, max_hit_comp, FightState},
     inventory::Inventory,
-    item::{Item, Material, MaterialType},
+    item::MaterialType, game,
 };
 
 #[derive(Clone, PartialEq)]
@@ -64,7 +64,7 @@ impl Player {
         player.xp.insert("fishing".to_string(), 0);
         player.xp.insert("cooking".to_string(), 0);
         player.xp.insert("farming".to_string(), 0);
-        
+
         player.register_abilities();
 
         return player;
@@ -255,54 +255,29 @@ impl Player {
         self.gold += gold;
     }
 
-    pub fn get_attack_bonus(&self) -> u64 {
-        let mut attack_bonus: u64 = self.get_level(&"melee".to_string());
+    pub fn get_bonus(&self, skill: &String) -> u64 {
+        let mut bonus: u64 = self.get_level(skill);
 
         if let Some(item) = self.inventory.get_main_hand() {
-            attack_bonus += item.get_material().get_melee_bonus();
+            bonus += item.get_material().get_bonus(skill);
         }
         if let Some(item) = self.inventory.get_off_hand() {
-            attack_bonus += item.get_material().get_attack_bonus();
+            bonus += item.get_material().get_bonus(skill);
         }
         if let Some(item) = self.inventory.get_helmet() {
-            attack_bonus += item.get_material().get_attack_bonus();
+            bonus += item.get_material().get_bonus(skill);
         }
         if let Some(item) = self.inventory.get_chestplate() {
-            attack_bonus += item.get_material().get_attack_bonus();
+            bonus += item.get_material().get_bonus(skill);
         }
         if let Some(item) = self.inventory.get_leggings() {
-            attack_bonus += item.get_material().get_attack_bonus();
+            bonus += item.get_material().get_bonus(skill);
         }
         if let Some(item) = self.inventory.get_boots() {
-            attack_bonus += item.get_material().get_attack_bonus();
+            bonus += item.get_material().get_bonus(skill);
         }
 
-        return attack_bonus;
-    }
-
-    pub fn get_defense_bonus(&self) -> u64 {
-        let mut defense_bonus: u64 = self.get_level(&"defense".to_string());
-
-        if let Some(item) = self.inventory.get_main_hand() {
-            defense_bonus += item.get_material().get_defense_bonus();
-        }
-        if let Some(item) = self.inventory.get_off_hand() {
-            defense_bonus += item.get_material().get_defense_bonus();
-        }
-        if let Some(item) = self.inventory.get_helmet() {
-            defense_bonus += item.get_material().get_defense_bonus();
-        }
-        if let Some(item) = self.inventory.get_chestplate() {
-            defense_bonus += item.get_material().get_defense_bonus();
-        }
-        if let Some(item) = self.inventory.get_leggings() {
-            defense_bonus += item.get_material().get_defense_bonus();
-        }
-        if let Some(item) = self.inventory.get_boots() {
-            defense_bonus += item.get_material().get_defense_bonus();
-        }
-
-        return defense_bonus;
+        return bonus;
     }
 
     pub fn get_combat_level(&self) -> u64 {
@@ -413,6 +388,7 @@ impl Player {
     }
 
     pub fn register_abilities(&mut self) {
+        // Melee
         self.abilities.push(Ability::new(
             "Backhand".to_string(),
             "Forcefully backhand your opponent, dealing a guaranteed 15 melee damage.".to_string(),
@@ -434,7 +410,8 @@ impl Player {
             1,
             1.0,
             |state|
-             -> () {                let max_hit = max_hit_comp(state.player.get_attack_bonus(), state.monster.get_defense()) * 4;
+             -> () {
+                let max_hit = max_hit_comp(state.player.get_bonus(&"attack".to_string()), state.monster.get_defense()) * 4;
                 let damage = (max_hit as f32 * random::<f32>()) as i32;
                 if random::<f32>() < state.pl_crit_chance {
                     state.monster_health -= damage * 2;
@@ -449,6 +426,86 @@ impl Player {
                         "Your Scroll of the Ancient Samurai hits the {} for {} damage.",
                         state.monster.get_name(),
                         damage
+                    );
+                }
+            },
+        ));
+        // Ranged
+        // Magic
+        self.abilities.push(Ability::new(
+            "Fireball".to_string(),
+            "Shoot a basic fireball that explodes dealing up to 125% of your max magic hit."
+                .to_string(),
+            "magic".to_string(),
+            1,
+            0.2,
+            |state: &mut FightState| -> () {
+                let max_hit = (max_hit_comp(
+                    state.player.get_bonus(&state.combat_style.to_string()),
+                    state.monster.get_defense(),
+                ) as f32
+                    * 1.25) as u32;
+                let roll = (random::<u32>() % max_hit) as i32;
+                state.monster_health -= roll as i32;
+                if random::<f32>() < state.pl_crit_chance {
+                    state.monster_health -= roll * 2;
+                    println!(
+                        "Your fireball critically explodes, hitting the {} for {} {} damage.",
+                        state.monster.get_name(),
+                        roll * 2,
+                        state.combat_style
+                    );
+                } else {
+                    state.monster_health -= roll;
+                    println!(
+                        "Your fireball explodes, hitting the {} for {} {} damage.",
+                        state.monster.get_name(),
+                        roll,
+                        state.combat_style
+                    );
+                }
+            },
+        ));
+        self.abilities.push(Ability::new(
+            "Inferno of the Shadows".to_string(),
+            "Sacrifice 10% of your hitpoints to unleash a devastating inferno of dark fire, dealing between 200% and 475% of your maximum magic damage.".to_string(),
+            "magic".to_string(),
+            1,
+            1.0,
+            |state: &mut FightState| -> () {
+                let cost = (state.health as f32 * 0.1).max(1.0) as i32;
+                if cost >= state.health {
+                    println!("This ability would kill you.");
+                    return;
+                }
+                state.health -= cost;
+                println!("You lose {} health at the cost of Inferno of the Shadows", cost);
+                thread::sleep(Duration::from_millis(
+                    (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+                ));
+                let potential_max_hit = max_hit_comp(
+                    state.player.get_bonus(&state.combat_style.to_string()),
+                    state.monster.get_defense(),
+                );
+                let min_hit = potential_max_hit * 2;
+                let max_hit = (potential_max_hit as f32 * 4.75) as u32;
+                let roll = (random::<u32>() % (max_hit - min_hit)) as i32 + min_hit as i32;
+                state.monster_health -= roll as i32;
+                if random::<f32>() < state.pl_crit_chance {
+                    state.monster_health -= roll * 2;
+                    println!(
+                        "Your Inferno of the Shadows critically burns the {} for {} {} damage.",
+                        state.monster.get_name(),
+                        roll * 2,
+                        state.combat_style
+                    );
+                } else {
+                    state.monster_health -= roll;
+                    println!(
+                        "Your Inferno of the Shadows burns the {} for {} {} damage.",
+                        state.monster.get_name(),
+                        roll,
+                        state.combat_style
                     );
                 }
             },

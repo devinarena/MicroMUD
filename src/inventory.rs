@@ -7,7 +7,7 @@ use std::{
 use serde_json::{json, Value};
 
 use crate::{
-    game::PLAYER,
+    game::{self, PLAYER},
     io_manager::clear_screen,
     item::{Item, Material},
 };
@@ -326,13 +326,26 @@ pub fn print_inventory() {
         println!("  Boots: None");
     }
 
+    let melee = &"melee".to_string();
+    let ranged = &"ranged".to_string();
+    let magic = &"magic".to_string();
+    let defense = &"defense".to_string();
+
     println!(
-        "\nAttack Bonus: {}",
-        player.get_attack_bonus() - player.get_level(&"melee".to_string())
+        "\nMelee Bonus: {}",
+        player.get_bonus(melee) - player.get_level(melee)
+    );
+    println!(
+        "Ranged Bonus: {}",
+        player.get_bonus(ranged) - player.get_level(ranged)
+    );
+    println!(
+        "Magic Bonus: {}",
+        player.get_bonus(magic) - player.get_level(magic)
     );
     println!(
         "Defense Bonus: {}",
-        player.get_defense_bonus() - player.get_level(&"defense".to_string())
+        player.get_bonus(defense) - player.get_level(defense)
     );
 
     println!("\nInventory:");
@@ -395,7 +408,9 @@ pub fn equip(index: i32, slot: &str) {
 
             drop(player);
 
-            thread::sleep(Duration::from_secs(1));
+            thread::sleep(Duration::from_millis(
+                (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+            ));
             clear_screen();
             print_inventory();
         } else {
@@ -403,7 +418,9 @@ pub fn equip(index: i32, slot: &str) {
 
             drop(player);
 
-            thread::sleep(Duration::from_secs(1));
+            thread::sleep(Duration::from_millis(
+                (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+            ));
             clear_screen();
             print_inventory()
         }
@@ -429,7 +446,9 @@ pub fn equip(index: i32, slot: &str) {
 
             drop(player);
 
-            thread::sleep(Duration::from_secs(1));
+            thread::sleep(Duration::from_millis(
+                (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+            ));
             clear_screen();
             print_inventory();
         } else {
@@ -487,7 +506,9 @@ pub fn view_inventory() {
                     .get_inventory_mut()
                     .remove_quantity(index - 1, quantity);
                 println!("Dropped {} x {}", quantity, material);
-                thread::sleep(Duration::from_secs(1));
+                thread::sleep(Duration::from_millis(
+                    (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+                ));
                 clear_screen();
                 print_inventory();
             }
@@ -622,7 +643,9 @@ pub fn view_inventory() {
                 let value = item.get_material().get_value() * quantity as u64;
                 PLAYER.lock().unwrap().add_gold(value);
                 println!("Sold {} x {} for {}g", quantity, item.get_material(), value);
-                thread::sleep(Duration::from_secs(1));
+                thread::sleep(Duration::from_millis(
+                    (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+                ));
                 clear_screen();
                 print_inventory();
             }

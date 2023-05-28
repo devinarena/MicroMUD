@@ -3,7 +3,7 @@ use std::{fmt::Display, str::FromStr};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-pub mod armor;
+pub mod bonuses;
 pub mod food;
 pub mod weapon;
 
@@ -28,8 +28,11 @@ pub enum Material {
     OakLog,
     BirchLog,
     Apple,
-    // Equipment
     WoodenAxe,
+    // Firemaking
+    LeatherGloves,
+    TreeSpiritRemains,
+    // Melee Equipment
     WoodenDagger,
     WoodenSword,
     WoodenShield,
@@ -37,24 +40,30 @@ pub enum Material {
     WoodenChestplate,
     WoodenLeggings,
     WoodenBoots,
-    LeatherGloves,
+    // Ranged Equipment
+    // Magic Equipment
+    NoviceWand,
     // IronAxe,
     // SteelAxe,
     // GoldenAxe,
     // CrystalAxe,
     // EnchantedAxe,
     // Monsters
-    TreeSpiritRemains,
 }
 
 impl Material {
     pub fn get_name(&self) -> String {
         match self {
+            // Woodcutting
             Material::Log => "Logs".to_string(),
             Material::OakLog => "Oak Logs".to_string(),
             Material::BirchLog => "Birch Logs".to_string(),
             Material::Apple => "Apple".to_string(),
             Material::WoodenAxe => "Wooden Axe".to_string(),
+            // Firemaking
+            Material::LeatherGloves => "Leather Gloves".to_string(),
+            Material::TreeSpiritRemains => "Tree Spirit Remains".to_string(),
+            // Melee Equipment
             Material::WoodenDagger => "Wooden Dagger".to_string(),
             Material::WoodenSword => "Wooden Sword".to_string(),
             Material::WoodenShield => "Wooden Shield".to_string(),
@@ -62,18 +71,24 @@ impl Material {
             Material::WoodenChestplate => "Wooden Chestplate".to_string(),
             Material::WoodenLeggings => "Wooden Leggings".to_string(),
             Material::WoodenBoots => "Wooden Boots".to_string(),
-            Material::LeatherGloves => "Leather Gloves".to_string(),
-            Material::TreeSpiritRemains => "Tree Spirit Remains".to_string(),
+            // Ranged Equipment
+            // Magic Equipment
+            Material::NoviceWand => "Novice Wand".to_string(),
         }
     }
 
     pub fn get_type(&self) -> MaterialType {
         match self {
+            // Woodcutting
             Material::Log => MaterialType::Log,
             Material::OakLog => MaterialType::Log,
             Material::BirchLog => MaterialType::Log,
             Material::Apple => MaterialType::Food,
             Material::WoodenAxe => MaterialType::Axe,
+            // Firemaking
+            Material::LeatherGloves => MaterialType::Gloves,
+            Material::TreeSpiritRemains => MaterialType::Log,
+            // Melee Equipment
             Material::WoodenDagger => MaterialType::Weapon,
             Material::WoodenSword => MaterialType::Weapon,
             Material::WoodenShield => MaterialType::Shield,
@@ -81,18 +96,24 @@ impl Material {
             Material::WoodenChestplate => MaterialType::Chestplate,
             Material::WoodenLeggings => MaterialType::Leggings,
             Material::WoodenBoots => MaterialType::Boots,
-            Material::LeatherGloves => MaterialType::Gloves,
-            Material::TreeSpiritRemains => MaterialType::Log,
+            // Ranged Equipment
+            // Magic Equipment
+            Material::NoviceWand => MaterialType::Weapon,
         }
     }
 
     pub fn get_value(&self) -> u64 {
         match self {
+            // Woodcutting
             Material::Log => 5,
             Material::OakLog => 20,
             Material::BirchLog => 22,
             Material::Apple => 25,
             Material::WoodenAxe => 50,
+            // Firemaking
+            Material::LeatherGloves => 100,
+            Material::TreeSpiritRemains => 200,
+            // Melee Equipment
             Material::WoodenDagger => 50,
             Material::WoodenSword => 75,
             Material::WoodenShield => 75,
@@ -100,8 +121,9 @@ impl Material {
             Material::WoodenChestplate => 150,
             Material::WoodenLeggings => 125,
             Material::WoodenBoots => 100,
-            Material::LeatherGloves => 100,
-            Material::TreeSpiritRemains => 200,
+            // Ranged Equipment
+            // Magic Equipment
+            Material::NoviceWand => 200,
         }
     }
 
@@ -113,6 +135,7 @@ impl Material {
 
     pub fn print_info(&self) {
         match self {
+            // Woodcutting
             Material::Log => {
                 println!("Logs are gathered from trees and can be used in firemaking.")
             }
@@ -126,13 +149,21 @@ impl Material {
                 println!("Apples are gathered from woodcutting and can be eaten to heal.\nWhen eaten:\n\tHealth: +10")
             }
             Material::WoodenAxe => {
-                println!("Wooden axe is a basic tool used to gather logs from trees.\nWhen equipped:\n\tWoodcutting: +1\n\tAttack: +1")
+                println!("Wooden axe is a basic tool used to gather logs from trees.\nWhen equipped:\n\tWoodcutting: +1\n\tMelee: +1")
             }
+            // Firemaking
+            Material::LeatherGloves => {
+                println!("Leather gloves can be worn on the hands to firemake.\nWhen equipped:\n\tDefense: +1");
+            }
+            Material::TreeSpiritRemains => {
+                println!("Tree Spirit Remains are gathered from Tree Spirits and can be used in firemaking.")
+            }
+            // Melee Equipment
             Material::WoodenDagger => {
-                println!("Wooden dagger is a basic wooden weapon used to fight monsters.\nWhen equipped:\n\tAttack: +1")
+                println!("Wooden dagger is a basic wooden weapon used to fight monsters.\nWhen equipped:\n\tMelee: +1")
             }
             Material::WoodenSword => {
-                println!("Wooden sword is a better wooden weapon used to fight monsters.\nWhen equipped:\n\tAttack: +2")
+                println!("Wooden sword is a better wooden weapon used to fight monsters.\nWhen equipped:\n\tMelee: +2")
             }
             Material::WoodenShield => {
                 println!("Wooden shield is a basic wooden weapon used to protect against monsters.\nWhen equipped:\n\tDefense: +1")
@@ -149,11 +180,10 @@ impl Material {
             Material::WoodenBoots => {
                 println!("Wooden boots are a basic wooden armor used to protect against monsters.\nWhen equipped:\n\tDefense: +1")
             }
-            Material::LeatherGloves => {
-                println!("Leather gloves can be worn on the hands to firemake.\nWhen equipped:\n\tDefense: +1");
-            }
-            Material::TreeSpiritRemains => {
-                println!("Tree Spirit Remains are gathered from Tree Spirits and can be used in firemaking.")
+            // Ranged Equipment
+            // Magic Equipment
+            Material::NoviceWand => {
+                println!("Novice wand is a basic magic weapon used to fight monsters.\nWhen equipped:\n\tMagic: +2")
             }
         }
     }
@@ -172,11 +202,16 @@ impl FromStr for Material {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            // Woodcutting
             "Log" => Ok(Material::Log),
             "OakLog" => Ok(Material::OakLog),
             "BirchLog" => Ok(Material::BirchLog),
             "Apple" => Ok(Material::Apple),
             "WoodenAxe" => Ok(Material::WoodenAxe),
+            // Firemaking
+            "LeatherGloves" => Ok(Material::LeatherGloves),
+            "TreeSpiritRemains" => Ok(Material::TreeSpiritRemains),
+            // Melee Equipment
             "WoodenDagger" => Ok(Material::WoodenDagger),
             "WoodenSword" => Ok(Material::WoodenSword),
             "WoodenShield" => Ok(Material::WoodenShield),
@@ -184,8 +219,9 @@ impl FromStr for Material {
             "WoodenChestplate" => Ok(Material::WoodenChestplate),
             "WoodenLeggings" => Ok(Material::WoodenLeggings),
             "WoodenBoots" => Ok(Material::WoodenBoots),
-            "LeatherGloves" => Ok(Material::LeatherGloves),
-            "TreeSpiritRemains" => Ok(Material::TreeSpiritRemains),
+            // Ranged Equipment
+            // Magic Equipment
+            "NoviceWand" => Ok(Material::NoviceWand),
             _ => Err(()),
         }
     }

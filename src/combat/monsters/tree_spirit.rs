@@ -2,7 +2,7 @@ use rand::random;
 
 use crate::{
     combat::{ability::Ability, max_hit_comp, FightState},
-    item::{Item, Material},
+    item::Material,
     player::Player,
 };
 
@@ -24,8 +24,10 @@ impl TreeSpirit {
                 0.25,
                 |state| {
                     state.monster_adrenaline -= 0.25;
-                    let max_hit =
-                        max_hit_comp(state.monster_attack + 5, state.player.get_defense_bonus());
+                    let max_hit = max_hit_comp(
+                        state.monster_attack + 5,
+                        state.player.get_bonus(&"defense".to_string()),
+                    );
                     let damage = (max_hit as f32 * random::<f32>()) as i32;
                     if random::<f32>() < state.pl_crit_chance {
                         state.monster_health -= damage * 2;
@@ -80,10 +82,8 @@ impl MonsterData for TreeSpirit {
 
     fn get_drops(&self) -> Vec<(Material, u32, u32, f32)> {
         vec![
-            (Material::TreeSpiritRemains, 1, 1, 1.0),
-            (Material::Log, 1, 2, 0.5),
-            (Material::OakLog, 1, 1, 0.25),
-            (Material::BirchLog, 1, 1, 0.15),
+            (Material::TreeSpiritRemains, 1, 1, 0.5),
+            (Material::Log, 1, 2, 1.0),
         ]
     }
 
@@ -106,7 +106,9 @@ impl MonsterData for TreeSpirit {
     fn choose_ability(&self, state: &mut FightState) -> bool {
         for _ in 0..self.abilities.len() {
             let index = random::<usize>() % self.abilities.len();
-            if random::<f32>() <= self.ability_chances[index] {
+            if state.monster_adrenaline >= self.abilities[index].get_cost()
+                && random::<f32>() <= self.ability_chances[index]
+            {
                 (self.abilities[index].activate)(state);
                 return true;
             }

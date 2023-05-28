@@ -31,7 +31,9 @@ pub fn woodcut(tree: &dyn TreeData) {
             != MaterialType::Axe
     {
         println!("You don't have an axe equipped!");
-        thread::sleep(Duration::new(1, 0));
+        thread::sleep(Duration::from_millis(
+            (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+        ));
         return;
     }
 
@@ -42,7 +44,9 @@ pub fn woodcut(tree: &dyn TreeData) {
             "You need a woodcutting level of {} to cut this tree.",
             tree.get_required_level()
         );
-        thread::sleep(Duration::new(3, 0));
+        thread::sleep(Duration::from_millis(
+            (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+        ));
         return;
     }
 
@@ -90,15 +94,15 @@ pub fn woodcut(tree: &dyn TreeData) {
                 .add_item(Item::new(Material::Apple, 1));
         }
 
-        thread::sleep(Duration::new(
-            0,
-            (1000000000_f32 / game::TICK_RATE as f32 * game::TICK_RATE as f32 * game::SPEED_SCALE)
-                as u32,
+        thread::sleep(Duration::from_millis(
+            (1000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
         ));
     }
 
     println!("You stop chopping the tree.");
-    thread::sleep(Duration::new(3, 0));
+    thread::sleep(Duration::from_millis(
+        (2000_f32 / game::TICK_RATE as f32 * game::SPEED_SCALE) as u64,
+    ));
 }
 
 pub fn woodcutting_menu() {

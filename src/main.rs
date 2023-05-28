@@ -13,6 +13,7 @@ pub mod skilling;
 pub mod skills;
 pub mod startup;
 pub mod combat;
+pub mod shop;
 
 fn main() {
     main_menu();

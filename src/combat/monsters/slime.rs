@@ -85,7 +85,9 @@ impl MonsterData for Slime {
     fn choose_ability(&self, state: &mut FightState) -> bool {
         for _ in 0..self.abilities.len() {
             let index = random::<usize>() % self.abilities.len();
-            if random::<f32>() <= self.ability_chances[index] {
+            if state.monster_adrenaline >= self.abilities[index].get_cost()
+                && random::<f32>() <= self.ability_chances[index]
+            {
                 (self.abilities[index].activate)(state);
                 return true;
             }

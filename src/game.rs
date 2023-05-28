@@ -15,8 +15,8 @@ use crate::{
     skilling::skilling_menu, combat::combat_menu, item::{Material, Item},
 };
 
-pub static TICK_RATE: u32 = 20;
-pub static SPEED_SCALE: f32 = 1.0;
+pub static TICK_RATE: u32 = 1;
+pub static SPEED_SCALE: f32 = 0.5;
 pub static ACTION: Mutex<Action> = Mutex::new(Action::IDLE);
 pub static LOADED: Mutex<bool> = Mutex::new(false);
 lazy_static! {
@@ -25,7 +25,7 @@ lazy_static! {
 
 pub fn game_loop() {
     let mut input: usize = 0;
-    while input != 7 {
+    while input != 8 {
         clear_screen();
 
         let pl = PLAYER.lock().unwrap();
@@ -37,16 +37,17 @@ pub fn game_loop() {
         println!("  2. View Inventory");
         println!("  3. Skill");
         println!("  4. Fight");
-        println!("  5. Move");
-        println!("  6. Save");
-        println!("  7. Exit");
+        println!("  5. Shop");
+        println!("  6. Move");
+        println!("  7. Save");
+        println!("  8. Exit");
 
         print!("> ");
 
         drop(pl);
 
         input = read!();
-        while input < 1 || input > 7 {
+        while input < 1 || input > 8 {
             println!("Invalid input. Please enter a number between 1 and 7.");
             print!("> ");
             input = read!();
@@ -69,11 +70,16 @@ pub fn game_loop() {
             4 => {
                 combat_menu();
             }
-            6 => {
+            5 => {
+                
+            }
+            7 => {
                 stdout().flush().unwrap();
                 write_player_save();
                 println!("Game saved!");
-                thread::sleep(Duration::from_secs(1));
+                thread::sleep(Duration::from_millis(
+                    (100_f32 / TICK_RATE as f32 * SPEED_SCALE) as u64,
+                ));
             }
             _ => {}
         }
