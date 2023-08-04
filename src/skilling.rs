@@ -32,11 +32,6 @@ pub fn skilling_menu() {
     print!("> ");
 
     let mut input: usize = read!();
-    while input < 1 || input > 3 {
-        println!("Invalid input. Please enter a number between 1 and 3.");
-        print!("> ");
-        input = read!();
-    }
 
     match input {
         1 => woodcutting_menu(),

@@ -370,12 +370,6 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         let mut input: usize = read!();
 
-        while input < 1 || input > 5 {
-            println!("Invalid input. Please enter a number between 1 and 4.");
-            print!("> ");
-            input = read!();
-        }
-
         match input {
             1 => {
                 player_attack(state);
@@ -421,7 +415,7 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         let xp = (state.monster_level as u64) * 15;
         let hp_xp = state.monster.get_hitpoints() as u64 * 20;
-        let defense_xp = (state.max_health - state.health) as u64 / 3;
+        let defense_xp = (state.max_health - state.health) as u64 / 5;
         state.player.add_xp(&combat_style.to_string(), xp);
         state.player.add_xp(&"hitpoints".to_string(), hp_xp);
         state.player.add_xp(&"defense".to_string(), defense_xp);
@@ -445,9 +439,9 @@ fn fight(monster: &Box<dyn MonsterData>) {
 
         for (material, min, max, chance) in monster.get_drops() {
             if random::<f32>() < chance {
-                let quantity = match max - min {
-                    0 => max,
-                    _ => random::<u32>() % (max - min) + min,
+                let quantity: u64 = match max - min {
+                    0 => max as u64,
+                    _ => random::<u64>() % (max - min) as u64 + min as u64,
                 };
                 println!(
                     "{} dropped {} x {}!",
@@ -458,7 +452,7 @@ fn fight(monster: &Box<dyn MonsterData>) {
                 state
                     .player
                     .get_inventory_mut()
-                    .add_item(Item::new(material, quantity as i32));
+                    .add_item(Item::new(material, quantity));
             }
         }
 

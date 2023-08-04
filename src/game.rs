@@ -12,7 +12,7 @@ use crate::{
     inventory::view_inventory,
     io_manager::{clear_screen, write_player_save},
     player::{Action, Player},
-    skilling::skilling_menu, combat::combat_menu, item::{Material, Item},
+    skilling::skilling_menu, combat::combat_menu, item::{Material, Item}, shop::shop_menu,
 };
 
 pub static TICK_RATE: u32 = 1;
@@ -22,15 +22,17 @@ pub static LOADED: Mutex<bool> = Mutex::new(false);
 lazy_static! {
     pub static ref PLAYER: Mutex<Player> = Mutex::new(Player::empty());
 }
+pub static TITLE: &str = "A Cursed World";
 
 pub fn game_loop() {
     let mut input: usize = 0;
+
     while input != 8 {
         clear_screen();
 
         let pl = PLAYER.lock().unwrap();
 
-        println!("Welcome to MicroMUD, {}!", pl.get_name());
+        println!("Welcome to {}, {}!", TITLE, pl.get_name());
         println!("Current location: {}", pl.get_location());
         println!("What would you like to do?");
         println!("  1. View Stats");
@@ -47,11 +49,6 @@ pub fn game_loop() {
         drop(pl);
 
         input = read!();
-        while input < 1 || input > 8 {
-            println!("Invalid input. Please enter a number between 1 and 7.");
-            print!("> ");
-            input = read!();
-        }
 
         match input {
             1 => {
@@ -65,13 +62,16 @@ pub fn game_loop() {
                 view_inventory();
             }
             3 => {
+                stdout().flush().unwrap();
                 skilling_menu();
             }
             4 => {
+                stdout().flush().unwrap();
                 combat_menu();
             }
             5 => {
-                
+                stdout().flush().unwrap();
+                shop_menu();
             }
             7 => {
                 stdout().flush().unwrap();
@@ -81,7 +81,8 @@ pub fn game_loop() {
                     (100_f32 / TICK_RATE as f32 * SPEED_SCALE) as u64,
                 ));
             }
-            _ => {}
+            8 => {},
+            _ => println!("Selection must be between 1 and 8"),
         }
     }
 }

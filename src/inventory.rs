@@ -171,7 +171,7 @@ impl Inventory {
         self.items.remove(index);
     }
 
-    pub fn remove_quantity(&mut self, index: usize, quantity: i32) {
+    pub fn remove_quantity(&mut self, index: usize, quantity: u64) {
         let prev = self.items[index].get_quantity();
 
         if (prev - quantity) <= 0 {
@@ -490,9 +490,9 @@ pub fn view_inventory() {
                     println!("Invalid syntax. Type 'help' for a list of commands.");
                     continue;
                 }
-                let mut quantity = 1;
+                let mut quantity: u64 = 1;
                 if tokens.len() == 3 {
-                    quantity = tokens[2].parse::<i32>().unwrap();
+                    quantity = tokens[2].parse::<u64>().unwrap();
                 }
                 let material = PLAYER
                     .lock()
@@ -627,7 +627,7 @@ pub fn view_inventory() {
                         .get_inventory()
                         .get_item(index - 1)
                         .get_quantity(),
-                    _ => tokens[2].parse::<i32>().unwrap(),
+                    _ => tokens[2].parse::<u64>().unwrap(),
                 };
                 let item = PLAYER
                     .lock()

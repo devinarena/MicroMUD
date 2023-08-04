@@ -139,6 +139,7 @@ pub fn woodcutting_menu() {
         print!("> ");
 
         input = read!();
+        
         while input < 1 || input > i {
             println!("Invalid input. Please enter a number between 1 and 2.");
             print!("> ");

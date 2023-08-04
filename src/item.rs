@@ -102,31 +102,6 @@ impl Material {
         }
     }
 
-    pub fn get_value(&self) -> u64 {
-        match self {
-            // Woodcutting
-            Material::Log => 5,
-            Material::OakLog => 20,
-            Material::BirchLog => 22,
-            Material::Apple => 25,
-            Material::WoodenAxe => 50,
-            // Firemaking
-            Material::LeatherGloves => 100,
-            Material::TreeSpiritRemains => 200,
-            // Melee Equipment
-            Material::WoodenDagger => 50,
-            Material::WoodenSword => 75,
-            Material::WoodenShield => 75,
-            Material::WoodenHelmet => 100,
-            Material::WoodenChestplate => 150,
-            Material::WoodenLeggings => 125,
-            Material::WoodenBoots => 100,
-            // Ranged Equipment
-            // Magic Equipment
-            Material::NoviceWand => 200,
-        }
-    }
-
     pub fn get_required_level_equip(&self) -> (&str, u64) {
         match self {
             _ => ("melee", 1),
@@ -230,11 +205,11 @@ impl FromStr for Material {
 #[derive(Clone)]
 pub struct Item {
     material: Material,
-    quantity: i32,
+    quantity: u64,
 }
 
 impl Item {
-    pub fn new(material: Material, quantity: i32) -> Item {
+    pub fn new(material: Material, quantity: u64) -> Item {
         Item { material, quantity }
     }
 
@@ -242,15 +217,15 @@ impl Item {
         self.material.clone()
     }
 
-    pub fn get_quantity(&self) -> i32 {
+    pub fn get_quantity(&self) -> u64 {
         self.quantity
     }
 
-    pub fn set_quantity(&mut self, quantity: i32) {
+    pub fn set_quantity(&mut self, quantity: u64) {
         self.quantity = quantity;
     }
 
-    pub fn add_quantity(&mut self, quantity: i32) {
+    pub fn add_quantity(&mut self, quantity: u64) {
         self.quantity += quantity;
     }
 
@@ -268,7 +243,7 @@ impl Item {
     pub fn deserialize(json: &serde_json::Value) -> Item {
         Item {
             material: json["material"].as_str().unwrap().parse().unwrap(),
-            quantity: json["quantity"].as_i64().unwrap() as i32,
+            quantity: json["quantity"].as_i64().unwrap() as u64,
         }
     }
 }
